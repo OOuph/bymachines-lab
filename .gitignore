@@ -1,0 +1,23 @@
+# secrets
+.env
+*.pem
+
+# data: raw answers, exports, logs, alerts — never committed
+data/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# editors / os
+.DS_Store
+.idea/
+.vscode/
