@@ -1,0 +1,103 @@
+# By Machines Lab — human-form panel, vertical #1 "relocation-europe" (Relocation Lab)
+# DRAFT v0 2026-09-28 for owner review. Freeze deadline: 2026-09-30 (`lab freeze` records sha256 in config/panel-hashes.txt).
+# After freeze this file must not change until 2027-01-11; new prompts go to a new class with its own start (HANDOFF-dev §7).
+#
+# Rules encoded here (HANDOFF-dev §3.1, strategy §5.1–§5.2):
+#   - class `provider` runs in 5 locations; every other class in one (lisbon).
+#   - every `provider` prompt carries `need` + `country` copied verbatim into the agent twin (prereg §4) — the pairing key is `id`.
+#   - class `agency` is measured for our own frequency only and is never published (`publish: false`).
+#   - class `brand` contains one positive-control prompt about a well-known firm (extraction must match it).
+#   - prompts are English search-style questions, as a buyer would type them.
+
+schema_version: 1
+vertical: relocation-europe
+panel: human
+frozen_at: null            # informational; the record of the freeze is config/panel-hashes.txt (`lab freeze`), the runner refuses a panel whose hash is not there
+runs_per_week: 7           # 1 run per day; run_idx = ISO weekday (1..7)
+start_date: 2026-10-01     # first live runs Thu 01.10 (SPEC §13); not planned before this UTC date
+default_location: lisbon
+
+classes:
+  provider: {locations: [lisbon, madrid, limassol, london, new_york], publish: true}
+  problem:  {locations: [lisbon], publish: true}
+  compare:  {locations: [lisbon], publish: true}
+  brand:    {locations: [lisbon], publish: false}   # By Machines / control rows never enter published tables (HANDOFF-dev §9)
+  agency:   {locations: [lisbon], publish: false}   # mini-panel "choosing an agency" — our own frequency only
+
+prompts:
+  # ---- provider (16) — paired 1:1 with agent twins A01..A16 by `id` ----
+  - {id: P01, class: provider, country: Portugal, need: "immigration lawyer for a D7 (passive income) visa",
+     text: "best immigration lawyer for a Portugal D7 (passive income) visa"}
+  - {id: P02, class: provider, country: Portugal, need: "immigration lawyer for a digital nomad (D8) visa",
+     text: "immigration lawyer for the Portugal digital nomad (D8) visa"}
+  - {id: P03, class: provider, country: Portugal, need: "immigration lawyer for a golden visa via an investment fund",
+     text: "lawyer for a Portugal golden visa through an investment fund"}
+  - {id: P04, class: provider, country: Portugal, need: "tax advisor for IFICI (the NHR 2.0 regime)",
+     text: "tax advisor for IFICI (NHR 2.0) in Portugal"}
+  - {id: P05, class: provider, country: Portugal, need: "accountant for a freelancer moving to Lisbon",
+     text: "accountant for a freelancer moving to Lisbon"}
+  - {id: P06, class: provider, country: Portugal, need: "company formation firm to register an Lda for a non-resident founder",
+     text: "company formation firm to register an Lda in Portugal for a non-resident founder"}
+  - {id: P07, class: provider, country: Portugal, need: "immigration lawyer for family reunification of a resident's spouse and child",
+     text: "immigration lawyer for family reunification in Portugal (spouse and child of a resident)"}
+  - {id: P08, class: provider, country: Spain, need: "immigration lawyer for the digital nomad visa",
+     text: "lawyer for the Spain digital nomad visa"}
+  - {id: P09, class: provider, country: Spain, need: "tax advisor for the Beckham law regime",
+     text: "Beckham law tax advisor in Spain"}
+  - {id: P10, class: provider, country: Spain, need: "immigration lawyer for a non-lucrative visa",
+     text: "immigration lawyer for the Spain non-lucrative visa"}
+  - {id: P11, class: provider, country: Spain, need: "company formation firm to register an SL for a non-EU founder",
+     text: "company formation firm to register an SL in Spain for a non-EU founder"}
+  - {id: P12, class: provider, country: Cyprus, need: "immigration lawyer for permanent residence by investment (fast-track)",
+     text: "immigration lawyer for Cyprus permanent residence by investment (fast-track)"}
+  - {id: P13, class: provider, country: Cyprus, need: "tax advisor for non-dom status",
+     text: "Cyprus non-dom tax advisor"}
+  - {id: P14, class: provider, country: Cyprus, need: "company formation agent for a non-EU founder",
+     text: "company formation agent in Cyprus for a non-EU founder"}
+  - {id: P15, class: provider, country: Cyprus, need: "corporate service provider (accounting plus company secretary) for a small holding company",
+     text: "corporate service provider in Cyprus (accounting and company secretary) for a small holding company"}
+  - {id: P16, class: provider, country: Cyprus, need: "immigration lawyer for a work permit sponsored by a Cyprus employer",
+     text: "immigration lawyer for a Cyprus work permit sponsored by an employer"}
+
+  # ---- problem (12) ----
+  - {id: Q01, class: problem, country: Portugal, text: "how do I get residency in Portugal as a remote worker"}
+  - {id: Q02, class: problem, country: Portugal, text: "how much does a golden visa lawyer cost in Portugal"}
+  - {id: Q03, class: problem, country: Portugal, text: "who qualifies for IFICI (NHR 2.0) in Portugal"}
+  - {id: Q04, class: problem, country: Portugal, text: "how do I get a NIF and open a bank account in Portugal before moving"}
+  - {id: Q05, class: problem, country: Spain,    text: "how long does the Spain digital nomad visa take and what documents do I need"}
+  - {id: Q06, class: problem, country: Spain,    text: "what is the minimum income for the Spain non-lucrative visa"}
+  - {id: Q07, class: problem, country: Spain,    text: "can I keep my US LLC and live in Spain under the Beckham law"}
+  - {id: Q08, class: problem, country: Spain,    text: "do I need a lawyer to register a company in Spain as a foreigner"}
+  - {id: Q09, class: problem, country: Cyprus,   text: "do I need a lawyer to register a company in Cyprus"}
+  - {id: Q10, class: problem, country: Cyprus,   text: "what does the Cyprus non-dom status give me and how do I apply"}
+  - {id: Q11, class: problem, country: Cyprus,   text: "how much does it cost to set up and run a company in Cyprus"}
+  - {id: Q12, class: problem, country: Cyprus,   text: "how do I get a work permit in Cyprus as a non-EU citizen"}
+
+  # ---- compare (8) ----
+  - {id: C01, class: compare, country: multi, text: "Portugal vs Spain vs Cyprus for a founder relocating from the US"}
+  - {id: C02, class: compare, country: multi, text: "NHR 2.0 (IFICI) in Portugal vs the Beckham law in Spain"}
+  - {id: C03, class: compare, country: multi, text: "law firm vs relocation agency for getting a residence permit in Europe"}
+  - {id: C04, class: compare, country: Portugal, text: "Portugal D7 vs D8 visa: which one should I apply for"}
+  - {id: C05, class: compare, country: multi, text: "Cyprus non-dom vs Portugal IFICI for an investor with dividend income"}
+  - {id: C06, class: compare, country: multi, text: "setting up a company in Cyprus vs Portugal vs Spain for a non-EU founder"}
+  - {id: C07, class: compare, country: multi, text: "Portugal golden visa vs Cyprus permanent residence by investment"}
+  - {id: C08, class: compare, country: multi, text: "hiring a local lawyer vs an international immigration firm for moving to Europe"}
+
+  # ---- brand / control (4) ----
+  - {id: B01, class: brand, country: none, text: "What is By Machines?"}
+  - {id: B02, class: brand, country: none, text: "What does bymachines.ai publish?"}
+  - {id: B03, class: brand, country: none, text: "Who runs the 'Does AI see you?' check?"}
+  - {id: B04, class: brand, country: Portugal, control: positive,
+     text: "Is PLMJ a good law firm for immigration to Portugal?"}   # positive control: extraction must match firm `plmj`
+
+  # ---- agency mini-panel (10) — own frequency only, never published (HANDOFF-25 §7) ----
+  - {id: G01, class: agency, country: none, text: "best GEO agency in Europe"}
+  - {id: G02, class: agency, country: none, text: "who can get my SaaS recommended by ChatGPT"}
+  - {id: G03, class: agency, country: none, text: "AI search optimization consultant for B2B in Germany"}
+  - {id: G04, class: agency, country: none, text: "how do I get my company recommended by ChatGPT"}
+  - {id: G05, class: agency, country: none, text: "why doesn't Perplexity mention my brand"}
+  - {id: G06, class: agency, country: none, text: "how to measure AI visibility for a B2B company"}
+  - {id: G07, class: agency, country: none, text: "GEO vs SEO agency: what is the difference"}
+  - {id: G08, class: agency, country: none, text: "Peec AI vs Profound"}
+  - {id: G09, class: agency, country: none, text: "best AI visibility tracker for a small business"}
+  - {id: G10, class: agency, country: Portugal, text: "generative engine optimization agency in Portugal"}
