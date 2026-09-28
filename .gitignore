@@ -21,3 +21,14 @@ build/
 .DS_Store
 .idea/
 .vscode/
+
+# panel files stay out of the repo until their freeze date (SPEC Q2 → commit → reveal → verify):
+# on the freeze date commit only config/panel-hashes.txt; after the freeze add the panel with `git add -f`
+config/panels/*.yaml
+
+# local env variants
+.env.*
+!.env.example
+
+# recorded live engine answers used as local test fixtures: raw answers are never published (owner decision 29)
+tests/fixtures/*_live.json

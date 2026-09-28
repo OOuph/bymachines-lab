@@ -1,16 +1,28 @@
-# By Machines Lab — SPEC (v0, 2026-09-26)
+# By Machines Lab — SPEC (v1, 2026-09-28)
 
-**Status:** draft for owner approval (BPS phase 3). No code is written until the owner approves this file. Product spec only: *what* and *why*. The technical plan (*how*, vertical slices, tests) is in `PLAN.md`.
+**Status:** draft for owner approval (BPS phase 3). No code is written until the owner approves this file (🛑 STOP in `PLAN.md`). Product spec only: *what* and *why*. The technical plan (*how*, vertical slices, tests) is in `PLAN.md`. v0 (2026-09-26) is superseded in place; the diff is in git.
+
+**Working copy on the operator's machine:** `/Users/Shared/files/info/bymachines-lab` (clone of https://github.com/OOuph/bymachines-lab). Paths below are relative to the repository root so that reproducers can use them.
+
+**What changed since v0 (2026-09-28; sources: HANDOFF-dev 26.09, agent-form pre-registration 28.09, owner decision 31, vendor docs verified 28.09 — `docs/api-check-2026-09-28.md`):** §0 mode "no online publication" · §2 S-I agent form, S-J freeze and hash journal, S-K re-extraction, S-L sync · §4 catch-up policy, first partial week, engine facts · §6 config layout with per-vertical files and the hash journal · §8 engine adapters as the vendors' APIs are today (Perplexity Agent API, GPT-6 with `effort: none`, Gemini without location, DataForSEO city codes), tunables and cut order · §9 funnel with the agent form and real per-engine call counts · §10 `agent_single` reference · §12 rewritten (7 owner questions) · §13 calendar.
+
+## 0. Mode of this build: no online publication
+
+Until a separate owner command, nothing of the lab is exposed online: no site (slice S5), no public data pages, no LinkedIn / X / IndexNow / Bing Webmaster Tools, nothing listening on ports 80/443 for the site. The panel, the extraction, the census and the firm report are built and run **on the VPS** under a systemd timer (vault rule: long runs on a server, never on the operator's Mac); the Mac is for development, tests and reading exports. Exports live in `data/export/<iso_week>/` on the server and are pulled to the Mac with one `rsync` command. The firm report (S-F) is built locally as HTML and is not published. The nginx User-Agent sensor for machine readers belongs to S5 and is out of scope here.
 
 ## 1. Goal and users
 
-By Machines Lab measures how AI assistants — ChatGPT, Gemini, Perplexity, Google AI Mode / AI Overviews — name businesses when a buyer asks. It is an open instrument: a frozen prompt panel, repeated runs, every answer stored with its citations, mention frequency with confidence intervals, and the code to reproduce it. Zeros are published.
+By Machines Lab measures how AI assistants — ChatGPT, Gemini, Perplexity, Google AI Mode / AI Overviews — name businesses when a buyer asks. It is an open instrument: a frozen prompt panel, repeated runs, every answer stored with its citations, mention frequency with confidence intervals, and the code to reproduce it. Zeros are published (when publication starts).
 
-The instrument is vertical-agnostic. A **vertical is a config** (prompt panel + firm list + locations); the code is shared. Vertical #1: **relocation to Europe** — immigration lawyers, tax advisors, company-formation agents in Portugal, Spain and Cyprus. Series name on the site: **Relocation Lab**, path `/lab/relocation-europe/`.
+The instrument is vertical-agnostic. A **vertical is a config** (prompt panels + firm list + locations); the code is shared (owner decision 27). Vertical #1: **relocation to Europe** — immigration lawyers, tax advisors, company-formation agents in Portugal, Spain and Cyprus. Series name: **Relocation Lab**, future path `/lab/relocation-europe/`.
+
+Two forms of the same question are measured in the same schema (owner decision 31, 2026-09-28):
+- **human form** ("Seen"): the buyer's question as a person would type it — the published layer;
+- **agent form** ("Chosen"): the same need asked by an autonomous agent that must pick exactly one firm — a data layer collected from 2026-10-08 and **not published** until the tripwire or a written owner decision (decision 5 unchanged). The pre-registration with hypotheses, thresholds and the twist list is frozen separately (sha-lock 2026-10-05).
 
 Users:
 - **Operator** (one person): runs the weekly panel, reads exports, writes lab posts, produces firm reports.
-- **Readers** of bymachines.ai: firms in the vertical and AI-search practitioners who consume tables and CSVs.
+- **Readers** of bymachines.ai (after publication starts): firms in the vertical and AI-search practitioners who consume tables and CSVs.
 - **Reproducers**: anyone who clones the repo, adds their own API keys and re-runs the panel (MIT).
 
 Why open: results are trustworthy only if the panel, the method and the code can be inspected and re-run.
@@ -19,89 +31,135 @@ Why open: results are trustworthy only if the panel, the method and the code can
 
 | # | Scenario | Acceptance criteria |
 |---|---|---|
-| S-A | **Daily panel run.** Every day the runner asks each prompt of the panel to each engine (in each configured location for the `provider` class), one run per day, seven runs per ISO week. | One row per `(iso_week, prompt_id, engine_id, location, run_idx)`; raw JSON, answer text, citations and cost stored; re-running the same day adds nothing; a crash mid-run followed by a re-run completes only the missing rows. |
-| S-B | **Extraction.** Citations come from API metadata (URL, position). Firm mentions are matched against a frozen firm list with aliases; unknown proper names go to an `unmatched` queue for weekly manual review. | Reference fixtures (§10) pass; on 20 hand-labelled baseline answers, automatic firm matching agrees with the operator on ≥90 % of mentions. |
-| S-C | **Weekly export.** For each ISO week: mention frequency per firm × engine × location with Wilson 95 % interval, source share by domain and source type, week-to-week stability (Jaccard), `bymachines.ai` citation count, cost. CSV and JSON. | Files exist for every completed week; values reproduce §10; JSON carries `schema_version`; the site build reads them without edits. |
-| S-D | **Census.** For every firm in the list and a control sample: robots.txt rules for AI bots, HTTP status under bot user agents, text present in initial HTML vs JS-only, CDN/WAF signature, JSON-LD types, `llms.txt` presence, LinkedIn page and followers (manual field), directory presence, Bing-indexed pages, language versions. | On 10 known domains (5 behind Cloudflare, 5 not) results match a manual check; a full run over 60–160 domains finishes in under 30 minutes; output is a table joinable to firms. |
-| S-E | **Site data.** The static site (Hugo) renders the weekly tables from the export JSON with a CSV download and the method version. URL map, sections, taxonomies and the content model are fixed in the site-architecture document (kept with the site; to be published as `docs/site-architecture.md`) before S5; addresses never change. | One command builds the site from the latest export; `curl -A "OAI-SearchBot"` and `curl -A "PerplexityBot"` return the full text of every page. |
-| S-F | **Firm report — "Does AI see you?"** One command, one domain → HTML/PDF: frequency by engine and location over the last 4 weeks, who is named instead (top 10 on the same prompts), sources, the firm's census row, 3–5 observations, no promises. | Report for any firm in the DB builds in under 1 minute and reads without explanation. |
-| S-G | **Budget guard.** Before each daily run the projected weekly cost is computed; if it exceeds the cap the run stops and an alert is written. | With cap $50 and a simulated overrun the run does not start, `data/ALERT` exists, the log says why. |
-| S-H | **Vertical portability.** A new vertical = new panel YAML + firm list + locations. | Bringing up a second vertical requires zero code changes and ≤4 hours of operator work; the first vertical's panel stays frozen. |
+| S-A | **Daily panel run.** Every day at 06:00 UTC the runner asks each prompt of every frozen panel of the vertical to each enabled engine (in each configured location for the `provider` class), one run per day; `run_idx` = ISO weekday (1–7), so seven runs per ISO week. | One row per `(iso_week, prompt_id, engine_id, location, run_idx)`; raw JSON, answer text, citations and cost stored; re-running the same day adds nothing; a crash mid-run followed by a re-run completes only the missing rows; the log has timestamps and levels. |
+| S-B | **Extraction.** Citations come from API metadata (URL, position; for Gemini the domain from the chunk title, because its URIs are redirects). Firm mentions are matched against the frozen firm list with aliases; unknown proper names and cited domains not in the list go to an `unmatched` queue for weekly manual review (≤15 min). | Reference fixtures (§10) pass; on 20 hand-labelled baseline answers, automatic firm matching agrees with the operator on ≥90 % of mentions. |
+| S-C | **Weekly export.** For each ISO week: mention frequency per firm × engine × location with Wilson 95 % interval, source share by domain and source type, week-to-week stability (Jaccard), `bymachines.ai` citation count, cost, and `agent_single.csv` (S-I). CSV and JSON. | Files exist for every completed week; values reproduce §10; JSON carries `schema_version`; a future site build can read them without edits. |
+| S-D | **Census.** For every firm in the list and a control sample: robots.txt rules for AI bots, HTTP status under bot user agents, text present in initial HTML vs JS-only, CDN/WAF signature, JSON-LD types, `llms.txt` presence, LinkedIn page and followers (manual field), directory presence, Bing-indexed pages (`site:` via DataForSEO Bing organic, when that engine is enabled), language versions. | On 10 known domains (5 behind Cloudflare, 5 not) results match a manual check; a full run over 60–160 domains finishes in under 30 minutes; output is a table joinable to firms. |
+| S-E | **Site data (out of scope for this build; contract kept).** The export JSON/CSV of S-C is the only interface the future static site needs. | The export schema of §6 does not change without a `schema_version` bump. |
+| S-F | **Firm report — "Does AI see you?"** One command, one domain → local HTML: frequency by engine and location over the last 4 weeks, who is named instead (top 10 on the same prompts), sources, the firm's census row, 3–5 observations, no promises. Not published. | Report for any firm in the DB builds in under 1 minute and reads without explanation. |
+| S-G | **Budget guard.** Before each daily run the projected weekly cost (spent so far this ISO week + today's planned calls × per-engine unit estimates from `config/engines.yaml`) is computed; if it exceeds the cap the planner cuts in the fixed order (twist → `provider` class to 3 locations → agent core last); if still above the cap the run does not start and an alert is written. Two consecutive weeks without the agent core = "agent experiment paused", journal entry. | With cap $50 and a simulated overrun the cut order is applied and logged; with cap $0.01 the run does not start, `data/ALERT` exists, the log says why. |
+| S-H | **Vertical portability.** A new vertical = new panel YAML(s) + firm list + locations. | Bringing up a second vertical requires zero code changes and ≤4 hours of operator work; the first vertical's panels stay frozen. |
+| S-I | **Agent form.** Second panel file `config/panels/<vertical>.agent.yaml` (classes `agent`, `agent-brand`) and third `config/panels/<vertical>.twist.yaml` (class `twist`, one twist per week), same prompt fields, same runner, same tables, 7 runs, one location. Refusal phrases are `refusal_patterns` in the agent panel file, not in code. Weekly export `agent_single.csv` (`iso_week, prompt_id, engine, n_runs, n_single, n_refusal, n_unmatched, slot_firm, slot_share`) is computed by SQL over `runs` + `mentions` (`SELECT run_id, COUNT(DISTINCT brand_id) AS n_firms FROM mentions GROUP BY run_id`, then aggregated per cell). The OpenAI adapter can run **without** `web_search` (engine option `search: false` = no `tools` in the request) for the twist "prior without search". This is data collection in the schema of §6, not a Choose / Pay product (§3). | For a test week with 5 twins, `agent_single.csv` reproduces a hand-computed table (§10); every phrase of the frozen refusal list is caught by the configured regexes on fixtures; a run with `search: false` stores `search=0`, zero citations and no `web_search_call` item in the raw JSON. |
+| S-J | **Freeze and hash journal.** `lab freeze --panel <file>` records `sha256`, date and file name in `config/panel-hashes.txt` (append-only, committed). The runner refuses a panel whose current hash is not the latest journal entry for that file. The twist file is re-frozen every week before Monday; the human panel is frozen on 2026-09-30, the agent panel on 2026-10-05. | Editing a frozen panel makes `lab run` exit with a config error before any spend; the journal line format is stable (`<date> <sha256> <file>`); the pre-registration hash can be appended to the same journal with `lab freeze --file`. |
+| S-K | **Re-extraction.** Raw JSON is kept forever; `lab extract --week <iso>` recomputes citations and mentions from stored answers with the current firm list; rows carry `rules_version` (hash of the firm list + extractor version). | Changing an alias and re-extracting changes `mentions` without touching `runs`; the export uses the latest `rules_version`. |
+| S-L | **Sync.** One documented `rsync` command pulls `data/export/` (and optionally the SQLite backup) from the VPS to the Mac; `--exclude` patterns are anchored with a leading slash. | The command in `deploy/README.md` runs without edits and never pulls `.env`. |
 
 ## 3. Non-goals
 
-No dashboard or SaaS; no multi-tenant; no scraping of consumer UIs (reserve: Elmo / GetCito on week 8 if manual UI control is too costly); no Choose / Pay tracks; no `llms.txt` generation; no ranking or position metrics; no editorial judgement of firm quality — the lab reports whom the engines name, not who is better; no languages other than English; no local business profiles.
+No dashboard or SaaS; no multi-tenant; no scraping of consumer UIs (reserve: Elmo / GetCito on week 8 if manual UI control is too costly); **no Choose / Pay tracks as a product** — the agent form of S-I is data collection in the same schema, unpublished, and does not contradict this line; no `llms.txt` generation; no ranking or position metrics; no editorial judgement of firm quality — the lab reports whom the engines name, not who is better; no languages other than English; no local business profiles; in this build no site, no public pages, no outbound distribution (§0).
 
 ## 4. Errors and edge cases
 
-- **API failure**: 3 retries with exponential backoff; then `status=error` with the message stored; other engines and prompts continue; missing rows are picked up by the next run in the same week.
+- **API failure**: 3 retries with exponential backoff (honouring `Retry-After`); then `status=error` with the message stored; other engines and prompts continue; error rows are retried by the next run within the catch-up window (below).
 - **Missing key**: the engine is skipped with a warning at start; the run proceeds for the others.
-- **Engine without a location parameter**: the engine is queried once per prompt; `engines.supports_location=0`; exports show a single location for it.
-- **Answer without citations**: stored and flagged; counted in "answers without citations" per engine.
-- **Alias collision** (two firms sharing an alias): the alias is rejected at config validation; the run does not start until fixed.
-- **Same firm in two countries**: one firm record per legal entity with a `country` field.
+- **Engine disabled** (`enabled: false` in `config/engines.yaml`): planned as if absent; exports show it as missing, not as zero. Owner decision 2026-09-28 (Q6 → a): all four engines enabled from 2026-10-01.
+- **Engine without a location parameter** (Gemini API has none for search grounding — only Vertex AI documents `retrievalConfig.latLng`): the engine is queried once per prompt; `engines.supports_location=0`; rows carry `location='n/a'`; exports show a single location for it. Locations are never emulated through the prompt text.
+- **OpenAI location default**: with `user_location` omitted OpenAI assumes the United States, so the adapter always sends the explicit location of the cell; a run without search sends no tool at all.
+- **Missed day (catch-up policy, Q7)**: the planner covers weekdays `[today − catch_up_days, today]` of the current ISO week (`catch_up_days: 1` by default); missing or error rows for those weekdays are executed and flagged `catch_up=1` with the real `ts_utc`, so the "Noise" reading can exclude them. Older gaps stay gaps: `n_runs < 7` for that cell and the Wilson interval widens; nothing is back-filled across weeks.
+- **First partial week**: the first live runs start Thu 2026-10-01 → ISO week 2026-W40 has 4 runs per cell; exports carry `n_runs=4`. The agent form starts Thu 2026-10-08 (2026-W41) with 4 runs likewise.
+- **Answer without citations**: stored and flagged; counted in "answers without citations" per engine. For Gemini and Perplexity "tool attached" ≠ "search executed": the adapter records whether a search actually ran (`webSearchQueries` non-empty / a `search_results` step present).
+- **Agent answer with zero matched firms**: if the answer text matches any `refusal_patterns` regex → `refusal`; otherwise → `unmatched` queue (the same queue as the human form).
+- **Alias collision** (two firms sharing an alias) or a prompt id used twice across the vertical's panel files: rejected at config validation; the run does not start until fixed.
+- **Same firm in two countries**: one record per legal entity with a `country` field.
+- **Person, product or institution named instead of the firm**: config, not code — `kind` (`firm | person | institution | product`) and an optional `parent` credit the mention to the firm (Q4).
 - **Week boundary**: ISO week in UTC; the daily run is scheduled at 06:00 UTC.
-- **Crash mid-run**: the database is the checkpoint; re-run is idempotent.
-- **Model renamed or deprecated**: a preflight call per engine at start; failure surfaces as a config error before any spend.
-- **Rate limits**: concurrency ≤4, per-engine backoff on 429.
-- **Cost overrun**: budget guard (S-G).
+- **Crash mid-run**: every stored row is a checkpoint; re-run is idempotent; SIGTERM finishes in-flight calls and starts no new ones.
+- **Model renamed or deprecated**: a preflight call per engine at start; failure surfaces as a config error before any spend. Known dates: Perplexity's legacy Sonar chat-completions support ended 2026-09-27 (requests are silently re-routed to Agent API presets) — the adapter therefore calls the Agent API with the model pinned; `gpt-5-mini-2025-08-07` shuts down 2026-12-11 (not used); `gemini-3.1-pro-preview` has no shutdown date (not used).
+- **Rate limits**: concurrency ≤4 overall and ≤1 request/s to Perplexity Agent API (Tier 0 = 1 QPS); per-engine backoff on 429.
+- **Cost overrun**: budget guard (S-G) with the fixed cut order.
+- **Frozen panel edited**: refused (S-J). A new prompt after the freeze = a new class with its own start date, never an edit.
 
 ## 5. Permissions and security
 
 - API keys only in environment variables; the repo ships `.env.example`, never `.env`.
-- The database (raw answers) and logs live in `data/`, git-ignored, backed up weekly by rsync to the operator's machine; not published.
-- Published artefacts: weekly exports (aggregates and firm names as the engines say them, which are public AI answers) and the code.
-- The public repo contains no personal data and no firm contacts; the firm list holds names, domains, aliases and country only.
+- The database (raw answers), logs, alerts and the operational journal live in `data/`, git-ignored, backed up weekly by rsync to the operator's machine; not published.
+- Published artefacts (when publication starts): weekly exports (aggregates and firm names as the engines say them, which are public AI answers) and the code. Raw engine answers are never published in any form (owner decision 29).
+- The public repo contains no personal data and no firm contacts; the firm list holds names, domains, aliases, kind, type and country only.
+- Panel files: see Q2. Default in this build: kept out of the repo until their freeze date, the sha256 committed on the freeze date, the file itself committed after (commit → reveal → verify).
+- Vendor terms: Gemini API terms (effective 2026-03-23) forbid analysing, learning from or programmatically collecting Grounded Results and Links; DataForSEO's Google AI Mode data is scraped SERP data. Whether the lab runs those two engines is the owner's decision (Q6); the journal records the decision and the date.
 - Bots we run identify themselves with a descriptive user agent for the census; robots.txt is read, not bypassed.
 
 ## 6. Reuse and contracts that must not break
 
-New project, nothing reused. Contracts that later code and the site depend on:
-- SQLite schema (tables `prompts`, `engines`, `runs`, `citations`, `brands`, `mentions`, `costs`, `census`, `ui_control`); unique key on `runs` as in S-A.
-- Export schema: `brand_frequency.csv` (`brand, engine, location, n_runs, n_mentioned, freq, wilson_low, wilson_high`), `sources.csv` (`engine, domain, source_type, share`), `stability.csv` (`engine, jaccard_vs_prev_week`), `our_citation.csv` (`prompt_id, engine, n_runs, n_cited`), `costs.csv` (`engine, calls, cost_usd`), plus the same in JSON with `schema_version`.
-- Config schema: `config/panel.<vertical>.yaml`, `config/firms.<vertical>.yaml`, `config/engines.yaml`.
-- CLI: `lab run`, `lab export`, `lab census`, `lab report`, `lab status`.
+New project, nothing reused. Contracts that later code and the future site depend on:
+
+- **Config layout** (a vertical = the files sharing its name):
+  - `config/engines.yaml` — engines, models, prices ⚠ (verified 2026-09-28), tunables (§8);
+  - `config/locations.yaml` — location keys → city / region / country / timezone / DataForSEO location code;
+  - `config/panels/<vertical>.yaml` — human form (classes `provider`, `problem`, `compare`, `brand`, `agency`);
+  - `config/panels/<vertical>.agent.yaml` — agent form (classes `agent`, `agent-brand`; `template`, `refusal_patterns`);
+  - `config/panels/<vertical>.twist.yaml` — the coming week's twist (class `twist`; `iso_week`, `engines`, `engine_options`);
+  - `config/firms/<vertical>.yaml` — firm list (`id, canonical, kind, parent, type, country, website, aliases, own`);
+  - `config/panel-hashes.txt` — append-only freeze journal.
+  Prompt fields: `id, class, text` (or `need` + `country` substituted into the panel `template`), optional `twin_of`, `control`. Prompt ids are unique across all panel files of a vertical. Panel fields `start_date` (not planned before this UTC date; human 2026-10-01, agent and twist 2026-10-08) and, for twists, `iso_week` bind a panel to the calendar of §13; the freeze check applies only to the panels due on the day.
+- **SQLite schema** (`data/lab.sqlite`): `panels(file, sha256, frozen_at)`, `prompts(id, panel_file, class, text, need, country, twin_of, locations_json)`, `engines(id, name, api, model, supports_location, notes)`, `runs(id, ts_utc, iso_week, prompt_id, engine_id, location, run_idx, status, raw_json, answer_text, cost_usd, error, panel_sha, search, searched, catch_up, latency_ms)` with unique `(iso_week, prompt_id, engine_id, location, run_idx)`, `citations(run_id, position, url, domain, source_type, rules_version)`, `brands(id, canonical, kind, parent_id, country, type, website, own, first_seen_week)` (= the firm list; "brand" is the credited entity), `mentions(run_id, brand_id, position, matched_alias, rules_version)`, `unmatched(run_id, candidate, source, status)`, `costs(iso_week, engine_id, calls, cost_usd)`, `census(...)` as in S-D, `ui_control(...)` filled by hand.
+- **Export schema** (`data/export/<iso_week>/`): `brand_frequency.csv` (`brand, engine, location, n_runs, n_mentioned, freq, wilson_low, wilson_high`), `sources.csv` (`engine, domain, source_type, share`), `stability.csv` (`engine, jaccard_vs_prev_week`), `our_citation.csv` (`prompt_id, engine, n_runs, n_cited`), `costs.csv` (`engine, calls, cost_usd`), `agent_single.csv` (`iso_week, prompt_id, engine, n_runs, n_single, n_refusal, n_unmatched, slot_firm, slot_share`), plus the same in JSON with `schema_version`. Rows of `own: true` brands and of classes with `publish: false` never enter `brand_frequency`; own frequency is a separate file `own_frequency.csv` with the same columns.
+- **CLI**: `lab validate`, `lab freeze`, `lab run`, `lab extract`, `lab export`, `lab census`, `lab report`, `lab status`.
 
 ## 7. End-to-end verification
 
-1. `pytest` offline with recorded fixtures for every engine adapter, the extractor, the metrics and the exporter.
-2. `lab run --limit 5 --runs 1` against live APIs: 5 prompts × 4 engines × 1 run, total cost under $1, rows with citations and costs present, log readable.
-3. `lab export --week <iso>` produces the files of §6; the site builds from them.
-4. Re-run the same day → row count unchanged. Kill a run mid-way, re-run → only missing rows added.
-5. Budget guard simulated with cap $0.01 → run refuses to start, alert written.
+1. `pytest` offline with recorded fixtures for every engine adapter, the extractor, the metrics, the exporter and the freeze check.
+2. `lab run --allow-unfrozen --db data/smoke.sqlite --limit 5 --runs 2 --engine openai --location lisbon --panel human` against the live OpenAI API (S1 smoke, may run on the Mac): 5 prompts × 1 engine × 1 location × 2 runs = 10 rows with citations and costs, total cost under $1, log readable; running it again adds 0 rows; `usage` of these 10 calls calibrates the per-call token estimate of §9. `--runs`, `--search` and `--allow-unfrozen` are refused on the production database.
+3. Dry run of a full day on the VPS (S2): the human form of the enabled engines (≈2 744 / 7 ≈ 392 calls with all four engines) + the agent form when frozen, cost per engine in the log and in `costs`; kill mid-run, re-run → only missing rows are added.
+4. `lab export --week <iso>` produces the files of §6; values of §10 reproduce.
+5. Budget guard simulated with cap $0.01 → run refuses to start, alert written; with a simulated overrun above $50 → cut order applied in the logged sequence.
+6. Edit a frozen panel → `lab run` refuses before any API call.
+7. `lab run --engine openai --search off` on 1 prompt → row has `search=0`, no citations, no `web_search_call` in raw JSON.
 
 ## 8. Implementation (spec → code mapping)
 
-- Package `lab/`: `config.py` (YAML load and validation), `engines/openai.py`, `engines/gemini.py`, `engines/perplexity.py`, `engines/dataforseo.py` (one function each: `ask(prompt, location) -> Answer`), `store.py` (SQLite), `runner.py` (plans the day's runs, idempotent), `extract.py` (citations, mentions, unmatched queue), `metrics.py` (Wilson, Jaccard, shares), `export.py`, `census.py`, `report.py`, `cli.py`.
-- Config: `config/engines.yaml` (models, modes, prices ⚠ to verify), `config/panel.relocation-europe.yaml` (prompts with class and locations), `config/firms.relocation-europe.yaml` (canonical name, aliases, country, type, website).
-- Tunables at the top of `config/engines.yaml`: `runs_per_week: 7`, `weekly_budget_usd: 50`, `concurrency: 4`, `retries: 3`, `daily_hour_utc: 6`.
-- Data: `data/lab.sqlite`, `data/logs/YYYY-MM-DD.log`, `data/export/<iso_week>/`, `data/ALERT`.
-- Deployment: `deploy/lab.service` + `deploy/lab.timer` (systemd, daily 06:00 UTC) on the VPS; `deploy/README.md` with the install steps.
-- Logging: levels with timestamps to stdout and to the daily log file.
-- Python 3.12, dependencies kept small (`httpx`, `pyyaml`, `pytest`; provider SDKs only where the raw HTTP API is awkward).
+- Package `lab/`: `config.py` (YAML load, validation, template substitution), `freeze.py` (hash journal), `engines/base.py` (`Answer` dataclass: text, citations, raw, cost, searched, latency), `engines/openai.py`, `engines/gemini.py`, `engines/perplexity.py`, `engines/dataforseo.py` (one function each: `ask(prompt, location, options) -> Answer`), `store.py` (SQLite), `planner.py` (the day's plan, catch-up, budget guard, cut order), `runner.py` (execution, concurrency, graceful stop), `extract.py` (citations, mentions, unmatched queue, refusal check), `metrics.py` (Wilson, Jaccard, shares, agent_single), `export.py`, `census.py`, `report.py`, `journal.py`, `cli.py`.
+- **Engine adapters as the vendors' APIs are on 2026-09-28** (`docs/api-check-2026-09-28.md`):
+  - **OpenAI** — Responses API `POST /v1/responses`, tool `{"type": "web_search", "search_context_size": "medium", "user_location": {"type": "approximate", "country", "city", "region", "timezone"}}`, `reasoning: {"effort": "none"}` (the "no reasoning" mode of GPT-6; `gpt-6-astra` rejects it), `include: ["web_search_call.action.sources"]`; citations = `message.content[].annotations[]` of type `url_citation`; cost = tokens at model rates + $0.01 per `web_search_call` with `action.type == "search"`. Models (Q1): `gpt-6-sol` ($2 / $10 per 1M) or `gpt-6-luna` ($0.10 / $0.50). No search = no `tools`.
+  - **Perplexity** — Agent API `POST /v1/agent` with `model: "perplexity/sonar"` pinned ($0.25 / $2.50 per 1M) and tool `{"type": "web_search", "search_context_size": "medium", "user_location": {"country", "region", "city"}}` ($2.50 per 1 000 calls). The legacy `/chat/completions` (`model: sonar`) lost support on 2026-09-27 and is re-routed to presets that run other vendors' models — not used. Citations = `output[]` step `search_results[].url`; text = the `message` step; cost = `usage.cost.total_cost` from the response. ≤1 request/s.
+  - **Gemini** — `generateContent` (legacy but fully supported; keeps `groundingMetadata`) with `tools: [{"google_search": {}}]`, model `gemini-3.8-flash` ($0.75 / $3.75 per 1M; grounded context not charged as input); citations = `groundingMetadata.groundingChunks[].web` — `uri` is a redirect, `title` is the source domain → `domain` from `title`, `url` = the redirect (not resolved: the terms forbid collecting Links); search count = `webSearchQueries` (billed per query: 5 000 free per month on the paid tier, then $14 per 1 000). No location parameter. Requires the paid tier (grounding is not available on the free tier).
+  - **DataForSEO** — Google AI Mode `POST /v3/serp/google/ai_mode/task_post` (standard queue, $1.20 per 1 000; ≈5 min) + `task_get/advanced/{id}`, or `live/advanced` ($4 per 1 000) for smoke tests; `location_code` per city (Lisbon 1011742, Madrid 1005493, Limassol 1003698, London 1006886, New York 1023191), `language_code: en`; text = `items[].markdown`; citations = union of `items[].references[]` in order (`url`, `domain`); cost = the task's `cost` field. Bing `site:` for the census: `POST /v3/serp/bing/organic/live/advanced`, `se_results_count`, ≈$0.01 per query.
+- Config: as in §6. Tunables at the top of `config/engines.yaml`: `runs_per_week: 7`, `weekly_budget_usd: 50`, `budget_cut_order: [twist, provider_locations_3, agent_core]`, `provider_locations_reduced: [lisbon, madrid, london]`, `concurrency: 4`, `retries: 3`, `daily_hour_utc: 6`, `catch_up_days: 1`. Per engine: `enabled`, `model` (and optional `model_by_class`, Q1), `supports_location`, `price` (⚠ dated), engine-specific options (`search_context_size`, `search`, `queue`).
+- Data: `data/lab.sqlite`, `data/logs/YYYY-MM-DD.log`, `data/export/<iso_week>/`, `data/ALERT`, `data/journal.md` (append-only: freezes, budget cuts, pauses, twist changes, engine enable/disable decisions).
+- Deployment: `deploy/lab.service` + `deploy/lab.timer` (systemd, daily 06:00 UTC) on the VPS; `deploy/README.md` with install steps, the rsync pull command and the weekly SQLite backup.
+- Logging: levels with timestamps to stdout and to the daily log file; one line per stored run (`key, status, cost, n_citations, searched, latency_ms`).
+- Python 3.12 (managed with `uv` on the Mac, system python on the VPS), dependencies kept small (`httpx`, `pyyaml`, `pytest`; no provider SDKs — all four APIs are plain HTTPS JSON).
 
 ## 9. Expected ranges (funnel)
 
-Calls per week: 3 192 (2 240 provider-class × 5 locations + 672 other classes + 280 agency mini-panel) — fixed while the panel is frozen. Answers with ≥1 citation: 60–95 % per engine (below 40 % → check the tool parameters). Firms named during baseline: 30–80 (below 10 → prompts too generic or extraction broken; above 200 → alias duplication). Weekly cost: $20–46 (above $50 → guard, then the provider class drops to 3 locations). Unmatched names after week 2: below 15 % of mentions.
+Calls per week, human form, all four engines enabled: OpenAI 798 + Perplexity 798 + DataForSEO 798 (16 provider × 5 locations + 34 other prompts, × 7) + Gemini 350 (no location: 50 × 7) = **2 744** (v0 said 3 192 before the Gemini fact). Agent form: 18 prompts × 4 engines × 7 = 504; twist ≤300. Upper bound ≈3 548 calls/week. Answers with ≥1 citation: 60–95 % per engine (below 40 % → check the tool parameters). Firms named during baseline: 30–80 (below 10 → prompts too generic or extraction broken; above 200 → alias duplication). Weekly cost at the vendors' prices of 2026-09-28, calibrated on the S1 smoke (10 live `gpt-6-sol` calls: median 18 870 input tokens of which ~4 400 cached, ~490 output, 1.4 searches per call, mean **$0.0447 per call**): OpenAI human form ≈ $36 with `sol` everywhere, ≈ $29 with the chosen mix (`sol` for `provider`, `luna` for the rest), ≈ $12 with `luna` everywhere; OpenAI agent form + twist ≈ $6; Perplexity ≈ $4–6, Gemini ≈ $2–8, DataForSEO ≈ $1 (⚠ not yet calibrated). Total with the chosen mix ≈ **$42–50**, i.e. at the cap — the guard and the cut order are expected to act in some weeks; `luna` everywhere would sit at ≈ $25. Latency: 20–70 s per searched OpenAI call → ~30 min per day for OpenAI at concurrency 4. Unmatched names after week 2: below 15 % of mentions. Agent form: M1 (share of single-firm answers) is a free reading; refusals ≥90 % on all engines for 2 weeks is a pre-registered stop condition, not a bug.
 
 ## 10. Reference values (tests must reproduce)
 
 - Wilson 95 % interval: 3 of 7 → 0.43 [0.16; 0.75]; 0 of 7 → 0.00 [0.00; 0.35]; 7 of 7 → 1.00 [0.65; 1.00].
 - Jaccard stability: {A, B, C} vs {B, C, D} → 0.50.
 - Source share: sums to 1.0 per engine-week.
-- Our citation: count of citations whose host is `bymachines.ai` or `www.bymachines.ai`; text mentions do not count.
+- Our citation: count of runs whose citation hosts include `bymachines.ai` or `www.bymachines.ai` (for Gemini: chunk title equals that domain); text mentions do not count.
+- `agent_single`: a cell with 7 runs where 5 runs name exactly firm X, 1 run names X and Y, 1 run is a refusal → `n_runs=7, n_single=5, n_refusal=1, n_unmatched=0, slot_firm=X, slot_share=0.714`; slot occupied when `slot_share ≥ 0.70`. A cell with 4 runs (partial week) divides by 4.
+- Alias normalisation: "PLMJ – Sociedade de Advogados, SP, RL" and "plmj advogados" both match `plmj`; "Cuatrecasas Abogados S.L.P." matches `cuatrecasas`.
+- OpenAI cost: `usage {input_tokens 9 000, output_tokens 800}` + 1 search on `gpt-6-sol` → `9 000 × 2 / 1e6 + 800 × 10 / 1e6 + 0.01 = $0.036`.
 
 ## 11. Assumptions to challenge
 
 1. Relocating buyers actually ask AI assistants for lawyers and tax advisors — not measured; the baseline is the first evidence.
-2. One run per day for seven days ≈ seven independent runs — to be checked for day-of-week autocorrelation in the "Noise" post.
+2. One run per day for seven days ≈ seven independent runs — to be checked for day-of-week autocorrelation in the "Noise" post; catch-up rows are flagged so they can be excluded.
 3. API answers are a usable proxy for consumer UI answers — known to be weak (≈24 % brand overlap for ChatGPT ⚠); mitigated by a weekly manual UI control of 5–10 prompts recorded in `ui_control`.
-4. The five locations for the provider class (Lisbon, Madrid, Limassol, London, New York) are the right split between destinations and origins.
-5. DataForSEO's AI Mode endpoint returns citations comparable to the consumer surface.
-6. A frozen panel for 12 weeks beats an evolving one — accepted as a method rule; new prompts go to a `v2` class with its own start date.
+4. The five locations for the provider class (Lisbon, Madrid, Limassol, London, New York) are the right split between destinations and origins; three engines accept a city-level location, Gemini does not (verified 2026-09-28).
+5. `perplexity/sonar` through the Agent API behaves like the Sonar engine that the pre-registration assumed; response shape and `user_location` honoured — to be confirmed by the first live call (docs give no guarantee).
+6. DataForSEO's AI Mode returns answers for Portugal, Spain and Cyprus locations (the docs point to Google's country list; earlier vendor posts said US/UK/India) and its terms allow storing and aggregating the answers (Q6) — to be checked with one live call per city before the freeze.
+7. Gemini's `title` field carries the source domain reliably (the official example shows it) — enough for source share and our-citation without resolving redirects.
+8. A frozen panel for 12 weeks beats an evolving one — accepted as a method rule; new prompts go to a `v2` class with its own start date.
+9. The agent-form prompt is meaningful on Google AI Mode (a search box, not a chat) — it may return a list rather than one firm; that is a measurement (low M1 for that engine), not a defect.
+10. Deterministic candidate mining (capitalised 2–5-word sequences with legal-form suffixes + cited domains not in the firm list) is enough to feed the `unmatched` queue; an LLM-assisted pass is not needed in the first 12 weeks.
+11. Per-call usage calibrated on 10 smoke calls (§9); the agent-form prompts (shorter answers, one firm) and other engines may differ — re-read after the first live week.
 
-## 12. Open questions for the owner
+## 12. Open questions for the owner (asked in the BPS interview 2026-09-28)
 
-1. **Model tier.** Weekly panel on the current flagship non-reasoning model (closest to the consumer product, higher cost) or on the mini tier (≈3× cheaper) — or flagship for the provider class only?
-2. **Publish the panel before launch?** The repo is public from the first commit; the frozen 50 prompts and the firm list would be visible before the site opens on 19.10. Publish from day one (open method) or keep `config/` private until launch?
-3. **Site source.** Hugo site in the same public repo (posts visible before publication) or a separate private `bymachines-site` repo?
+**Answered by the owner on 2026-09-28, SPEC approved:** Q1 → (b) `gpt-6-sol` for `provider`, `agent`, `twist`, `gpt-6-luna` for the rest · Q2 → (b) commit → reveal → verify · Q6 (vendor terms) → (a) all four engines run from 2026-10-01, revisited at the legal reading 12–18.10 · Q4, Q5, Q7 → confirmed as proposed. The text below is kept as the record of the options.
+
+1. **Model tier (`config/engines.yaml`, parameter, not code).** OpenAI: (a) `gpt-6-sol` everywhere (≈ $38–43/week human form); (b) `gpt-6-sol` for `provider` + `agent` + `twist`, `gpt-6-luna` for `problem`, `compare`, `brand`, `agency` (≈ $31–36); (c) `gpt-6-luna` everywhere (≈ $16–21). Both models run with `reasoning.effort: none`. **Default: (b).** Gemini `gemini-3.8-flash`, Perplexity `perplexity/sonar` — no tier choice.
+2. **Panel publication in the no-publication mode.** (a) Panel YAMLs in the public repo from the first commit (decision 29 literally), or (b) YAMLs kept out of the repo until their freeze dates, the sha256 committed to `config/panel-hashes.txt` on 2026-09-30 (human) and 2026-10-05 (agent + pre-registration), the files themselves committed after the freeze — commit → reveal → verify. **Default: (b).**
+3. **Site repository** — removed until the separate command for S5.
+4. **Alias "product → firm" and persons / institutions: config, not code.** Proposed: `kind` + `parent` fields in `config/firms/<vertical>.yaml`; a person or product is an alias of its firm; the code stays vertical-agnostic. Confirm or change.
+5. **Control-sample rule for "zeros included"** when a registry holds 144–2 622 firms: proposed — stratified random sample by country and type, size = max(30, number of named firms) per country, fixed seed and registry snapshot hash recorded in the census output, so the zero is a statement about a reproducible sample. Confirm or change.
+6. **Vendor terms — Gemini and DataForSEO / Google AI Mode.** Gemini API terms forbid analysing, learning from or programmatically collecting Grounded Results and Links (verbatim in `docs/api-check-2026-09-28.md`); DataForSEO sells scraped Google SERP data. Options: (a) run all four engines from 2026-10-01 as every commercial tracker does and revisit at the legal reading 12–18.10; (b) run OpenAI + Perplexity from 2026-10-01, enable Gemini and DataForSEO only after the owner's decision — note that the pre-registered agreement metric M4 needs ≥3 of 4 engines, so (b) delays it. **Default: (b), both engines `enabled: false`.** Needs an answer before 2026-10-01.
+7. **Catch-up policy** (§4): `catch_up_days: 1` — a single missed day is healed the next day and flagged; longer gaps stay gaps. Confirm or set 0 (never catch up) / 6 (fill the whole week).
+
+## 13. Calendar the code must hold
+
+Human panel frozen 2026-09-30 · first live runs Thu 2026-10-01 (W40, 4 runs) · agent twins paired and twists frozen by 2026-10-04 · sha-lock of the pre-registration and the agent panel 2026-10-05 · first agent runs Thu 2026-10-08 (W41: core 448 + control 56 + W5 twist 112 calls) · baseline reading 2026-10-12…18 · K-hours reading of the build (≤55 h since 2026-09-26) on 2026-10-18.

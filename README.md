@@ -8,9 +8,20 @@ The instrument is vertical-agnostic: a vertical is a config (prompt panel + firm
 
 ## Status
 
-Spec under review. `SPEC.md` says what and why; `PLAN.md` says how, in vertical slices with tests written before code. No code yet: the first slice starts after the spec is approved.
+`SPEC.md` v1 approved by the owner on 2026-09-28; `PLAN.md` says how, in vertical slices with tests written before code. **Slice S1 (panel v0)** is built: config validation, the freeze journal, the OpenAI `web_search` adapter, the SQLite store, an idempotent day planner and runner, `lab validate | freeze | run | status | export`. Slices S2–S4 (three more engines, budget guard, schedule; extraction and metrics; census) follow. This build runs without any online publication.
 
-## What will be here
+```bash
+uv sync                                   # Python 3.12, httpx, pyyaml, pytest
+uv run pytest                             # offline tests with recorded fixtures
+uv run lab validate                       # load and check the vertical config
+uv run lab freeze --panel config/panels/relocation-europe.yaml   # record the sha256 in config/panel-hashes.txt
+uv run lab run --dry-run                  # today's plan and its cost estimate (refuses unfrozen panels)
+uv run lab run --allow-unfrozen --db data/smoke.sqlite --limit 5 --runs 2 --engine openai --location lisbon --panel human
+uv run lab status --db data/smoke.sqlite
+uv run lab export --db data/smoke.sqlite --week 2026-W40
+```
+
+## What is here
 
 - `lab/` — panel runner, engine adapters, extraction, metrics, export, census, firm report
 - `config/` — engines, the frozen prompt panel per vertical, firm lists with aliases

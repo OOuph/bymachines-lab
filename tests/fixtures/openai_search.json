@@ -1,0 +1,48 @@
+{
+  "_fixture_note": "Shape follows the OpenAI Responses API reference read on 2026-09-28 (developers.openai.com/api/reference/resources/responses/methods/create). Replace with a recorded, redacted live response after the first smoke run.",
+  "id": "resp_fixture_search_001",
+  "object": "response",
+  "created_at": 1759300000,
+  "status": "completed",
+  "model": "gpt-6-sol",
+  "output": [
+    {
+      "id": "ws_fixture_1",
+      "type": "web_search_call",
+      "status": "completed",
+      "action": {
+        "type": "search",
+        "queries": ["best immigration lawyer Portugal D7 visa", "D7 visa lawyer Lisbon"],
+        "sources": [
+          {"type": "url", "url": "https://www.example-firm.pt/d7-visa"},
+          {"type": "url", "url": "https://www.expat-guide.example/portugal-d7-lawyers"},
+          {"type": "url", "url": "https://another-firm.example.com/immigration"}
+        ]
+      }
+    },
+    {
+      "id": "msg_fixture_1",
+      "type": "message",
+      "role": "assistant",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "For a Portugal D7 visa, Example Firm Advogados in Lisbon is often recommended for passive-income applications. Another Firm also handles D7 cases and has English-speaking staff. An expat guide lists both among the most cited options.",
+          "annotations": [
+            {"type": "url_citation", "url": "https://www.example-firm.pt/d7-visa", "title": "D7 visa lawyers — Example Firm", "start_index": 24, "end_index": 74},
+            {"type": "url_citation", "url": "https://another-firm.example.com/immigration", "title": "Immigration — Another Firm", "start_index": 130, "end_index": 176},
+            {"type": "url_citation", "url": "https://www.expat-guide.example/portugal-d7-lawyers", "title": "Best D7 lawyers in Portugal", "start_index": 200, "end_index": 250}
+          ]
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 9000,
+    "input_tokens_details": {"cached_tokens": 0, "cache_write_tokens": 0},
+    "output_tokens": 800,
+    "output_tokens_details": {"reasoning_tokens": 0},
+    "total_tokens": 9800
+  }
+}

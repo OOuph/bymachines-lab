@@ -1,0 +1,30 @@
+{
+  "_fixture_note": "Responses API answer without tools (twist W5 'prior without search'). Shape per the API reference read on 2026-09-28; replace with a recorded live response after the first smoke run.",
+  "id": "resp_fixture_nosearch_001",
+  "object": "response",
+  "created_at": 1759300100,
+  "status": "completed",
+  "model": "gpt-6-sol",
+  "output": [
+    {
+      "id": "msg_fixture_2",
+      "type": "message",
+      "role": "assistant",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "Example Firm Advogados — https://www.example-firm.pt",
+          "annotations": []
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 120,
+    "input_tokens_details": {"cached_tokens": 0, "cache_write_tokens": 0},
+    "output_tokens": 20,
+    "output_tokens_details": {"reasoning_tokens": 0},
+    "total_tokens": 140
+  }
+}

@@ -1,0 +1,42 @@
+# By Machines Lab — firm list, vertical #1 "relocation-europe". SEED v0 2026-09-28.
+# The real list is built from week-1 baseline answers (manual check, HANDOFF-dev §3.4) plus a control sample from
+# registries (rule to be decided by the owner — SPEC §12). Mentions are re-extracted from raw JSON whenever this
+# file changes (rules_version = sha256 of this file), so a late list costs nothing.
+#
+# Entity model (vertical-agnostic, decision 27 — everything here is config, the code is generic):
+#   kind:    firm | person | institution | product   — the unit that is credited with the mention
+#   parent:  id of the firm a person/product/institution is credited to (an alias by another name); omit for firms
+#   type:    law | tax | formation | relocation | other
+#   own:     true → our own rows (By Machines, Dilex); kept in the DB, excluded from every published table (HANDOFF-dev §3.4)
+#   aliases: matched case-insensitively after normalisation of punctuation and legal forms
+#            (Lda, S.L., Ltd, LLC, Advogados, Abogados, & Associados …). An alias shared by two ids fails validation.
+
+schema_version: 1
+vertical: relocation-europe
+firms:
+  - id: plmj
+    canonical: PLMJ
+    kind: firm
+    type: law
+    country: PT
+    website: plmj.com
+    aliases: ["PLMJ Advogados", "PLMJ Law Firm", "PLMJ - Sociedade de Advogados"]
+    note: positive control for extraction (panel prompt B04)
+
+  - id: bymachines
+    canonical: By Machines
+    kind: firm
+    type: other
+    country: CY
+    website: bymachines.ai
+    aliases: ["bymachines.ai", "By Machines Lab", "Relocation Lab by By Machines"]
+    own: true
+
+  - id: dilex
+    canonical: Dilex
+    kind: firm
+    type: other
+    country: CY
+    website: dilex.ltd
+    aliases: ["Dilex LTD", "dilex.ltd"]   # matching is case-insensitive: one spelling per alias
+    own: true
