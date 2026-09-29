@@ -110,7 +110,7 @@ def test_unmatched_queue_filters_by_current_rules_version(tmp_path):
 def test_ignore_terms_do_not_swallow_firm_names_that_contain_a_place_name(tmp_path):
     cfg = write_config(tmp_path / "real", firms=deep(REAL_FIRMS))
     v = load_vertical(cfg, "testvert")
-    idx = FirmIndex(v.firms)
+    idx = FirmIndex([])          # the real ignore list alone decides here; the real firm list grows weekly and may list these names
     ignore = set(v.extraction["unmatched_ignore_terms"])
     text = ("Options: Harvey Law Group Portugal, PwC Portugal, CMS Portugal, Portugal Residency Advisors, Lisbon Lawyers, "
             "Madrid Abogados, Cyprus Company Formation Services and Global Citizen Solutions. The Portugal Golden Visa is separate.")

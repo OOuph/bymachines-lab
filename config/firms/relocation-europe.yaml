@@ -1,4 +1,4 @@
-# By Machines Lab — firm list, vertical #1 "relocation-europe". SEED v0 2026-09-28.
+# By Machines Lab — firm list, vertical #1 "relocation-europe". SEED v0 2026-09-28; list v1 from the W40 queue 2026-09-29: applied by the owner, CHECK items under review.
 # The real list is built from week-1 baseline answers (manual check, HANDOFF-dev §3.4) plus a control sample from
 # registries (rule to be decided by the owner — SPEC §12). Mentions are re-extracted from raw JSON whenever this
 # file changes (rules_version = sha256 of this file), so a late list costs nothing.
@@ -19,7 +19,14 @@ vertical: relocation-europe
 unmatched_ignore_domains: [gov.pt, gov.es, gov.cy, europa.eu, aima.gov.pt, sef.pt, portaldasfinancas.gov.pt, eportugal.gov.pt,
                            exteriores.gob.es, agenciatributaria.es, moi.gov.cy, mof.gov.cy, oa.pt, occ.pt, cysec.gov.cy,
                            expatica.com, movingto.com, nomadgate.com, internations.org, expatforum.com, numbeo.com, statista.com,
-                           investopedia.com]
+                           investopedia.com,
+                           # 2026-09-29, W40 queue — directories, official sites, non-firm sites:
+                           "goldenvisalawyers.com", "globallawexperts.com", "locallista.com", "nomadfindr.com", "cyprusdesk.com",
+                           "advocateabroad.com", "holaretire.com", "portugalfamilyguide.com", "lawyersincyprus.com",
+                           "nomadgate.com", "gob.es", "boe.es", "cyprusbar.org", "cyprusbarassociation.org", "investinspain.org",
+                           "portugalglobal.pt", "diariodarepublica.pt", "gov.uk", "lawzana.com", "legal500.com", "chambers.com",
+                           "iclg.com", "wise.com", "stripe.com", "idealista.pt", "portugalist.com", "theportugalnews.com",
+                           "bookitit.com"]
 unmatched_ignore_terms: [Portugal, Spain, Cyprus, Lisbon, Porto, Madrid, Barcelona, Limassol, Nicosia, Europe, European Union, EU, EEA,
                          Golden Visa, D7 Visa, D8 Visa, D2 Visa, D7, D8, D2, Digital Nomad Visa, Non-Lucrative Visa, Beckham Law, NHR, IFICI, Non-Dom, AIMA, SEF,
                          ARI, Schengen, Social Security, Tax Identification Number, NIF, NIE, TIE, VAT, United States, United Kingdom, Brazil,
@@ -28,13 +35,65 @@ unmatched_ignore_terms: [Portugal, Spain, Cyprus, Lisbon, Porto, Madrid, Barcelo
                          Passive Income, Power of Attorney, PoA, Fee Expectations, Home Country, Double Taxation Treaties, DTT,
                          Cross-Border Tax Awareness, Scope of Representation, Verify Registration, North American, Portuguese Bar Association,
                          Portuguese Bar, Ordem dos Advogados, Ordem dos Contabilistas Certificados, OCC, Portuguese Tax Authority, CPA, VFS,
-                         Rio de Janeiro, Next Step, Next Steps]
+                         Rio de Janeiro, Next Step, Next Steps,
+                         # 2026-09-29, W40 queue — institutions, registries and official bodies:
+                         "Cyprus Bar Association", "Cyprus Bar Association's", "Cyprus Bar", "ICPAC",
+                         "Institute of Certified Public Accountants of Cyprus", "Migration Department", "Civil Registry", "CRMD",
+                         "Cyprus Tax Department", "Business Facilitation Unit", "BFU", "Registrar of Companies",
+                         "Department of Labour", "CySEC", "Cyprus Securities", "Exchange Commission", "CMVM",
+                         "Portuguese Securities Market Commission", "Autoridade Tributária", "Agencia Tributaria", "AEAT",
+                         "Spanish Tax Agency", "Tax Agency", "Tax Authority", "Finanças", "Portal das Finanças",
+                         "Segurança Social", "Spanish Social Security", "Spanish Consulate", "IAPMEI", "AICEP", "ENISA", "UGE",
+                         "UGE-CE", "Unidad de Grandes Empresas", "Startup Portugal", "VFS Global", "Loja do Cidadão",
+                         "Commercial Registry", "Central Commercial Registry", "Registro Mercantil", "Mercantile Registry",
+                         "CypriotAdvocateMembersPage", "ServiciosConsulares", "Visado-de-residencia-no-lucrativa.aspx",
+                         "PortugalExpats", "Bank of Cyprus", "Millennium BCP", "Novo Banco", "Revolut Business", "WhatsApp",
+                         # 2026-09-29, W40 queue — legal forms, identifiers, taxes and regimes:
+                         "LLC", "LTD", "Lda", "Spanish SL", "Portuguese Lda", "Unipessoal Lda", "US LLC", "Sociedad Limitada",
+                         "Spanish Sociedad Limitada", "Portuguese NIF", "Portuguese Tax Number",
+                         "Número de Identificação Fiscal", "Número de Identificación de Extranjero",
+                         "Foreigner Identification Number", "Spanish NIE", "Tax Identification Code", "TIC", "IRS", "IVA", "SDC",
+                         "Special Defence Contribution", "GeSY", "General Healthcare System", "CAE", "HE1", "HE32", "Form HE1",
+                         "TD4", "RCBE", "VIES", "IFRS", "IP Box", "Wealth Tax", "Capital Gains", "Category B", "Recibos Verdes",
+                         "Início de Atividade", "Empresa Online", "Poder Notarial", "Hague Apostille", "IPREM", "PAE", "FIC",
+                         "Foreign Interest Company", "Foreign Interests", "ICT", "EMI", "ASP", "CSP",
+                         "Corporate Service Provider", "Corporate Services", "KYC", "AML", "UBO", "HNWI", "PhD", "EUR", "TOC",
+                         "Contabilista Certificado", "Certified Accountant", "Advogado", "Digital Nomad", "DNV", "NLV",
+                         "Non-Habitual Resident", "Scientific Research", "Investigação Científica", "Incentivo Fiscal",
+                         "Tax Incentive", "TISRI", "Special Expat Tax Regime", "Programa Regressar", "Startup Visa",
+                         "Entrepreneur Visa", "Temporary Stay Visa", "Telework Visa", "Work Visa", "EU Blue Card", "Startup Law",
+                         "Startup Act", "Ley de Startups", "Employment Permit", "Temporary Residence", "Permanent Residency",
+                         "Schengen Area", "Cyprus Companies Law",
+                         # 2026-09-29, W40 queue — headings and phrases of an assistant's answer:
+                         "Accounting & Bookkeeping", "Articles of Association", "Memorandum & Articles of Association",
+                         "Bank Account Setup", "Bank Account Opening", "Bank Account & Capital Deposit",
+                         "Corporate Bank Account", "Company Secretary", "Registered Office Address", "Duration",
+                         "Eligibility Assessment", "Ongoing Compliance", "Annual Compliance", "Application Submission",
+                         "Document Preparation", "Family", "Family Inclusion", "Family Reunification", "Real Estate Investment",
+                         "Minimum Investment", "Main Applicant", "Monthly Retainer", "Processing Time", "Cost", "Pros", "Cons",
+                         "Advantages", "DIY", "Name Approval", "NIF & Fiscal Representation", "Tax & VAT Registration",
+                         "Share Capital", "Substance Requirements", "Tax Residency", "Corporate Tax", "AIMA Representation",
+                         "Activity Registration", "NIE Application", "Exempt", "Under Cyprus", "Navigating the Cyprus",
+                         "Navigating the Portugal Digital Nomad", "Navigating the Portugal Golden Visa", "Southern Europe",
+                         "English-speaking Spanish", "Big Four", "Big Four & International Networks", "Finance Matters", "SaaS",
+                         "New York",
+                         # 2026-09-29, W40 queue — firm names that are common phrases (the firm is listed with its domain):
+                         "Portugal Taxes", "Spain Company Formation", "Cyprus Tax Advisory", "Cyprus Audit Services",
+                         "Cyprus Accountants", "Visa Portugal",
+                         # 2026-09-29, W40 queue — block the bare variant of a listed firm (surname or word shared with other firms):
+                         "Venture Partners", "España", "Strong", "Araújo", "Almeida"]
 source_types:
   directory: [lawzana.com, legal500.com, chambers.com, clutch.co, sortlist.com, justia.com, hg.org, martindale.com, lexology.com,
-              leadersleague.com, iclg.com, expatriates.com]
+              leadersleague.com, iclg.com, expatriates.com,
+              # 2026-09-29, W40 queue:
+              "goldenvisalawyers.com", "globallawexperts.com", "locallista.com", "nomadfindr.com", "cyprusdesk.com",
+              "advocateabroad.com", "holaretire.com", "portugalfamilyguide.com", "lawyersincyprus.com", "nomadgate.com"]
   forum: [reddit.com, quora.com, expatforum.com, internations.org, facebook.com]
   official: [gov.pt, gov.es, gov.cy, europa.eu, aima.gov.pt, sef.pt, portaldasfinancas.gov.pt, eportugal.gov.pt, exteriores.gob.es,
-             agenciatributaria.es, moi.gov.cy, mof.gov.cy, oa.pt, occ.pt, cysec.gov.cy]   # bar and accountants' orders count as official
+             agenciatributaria.es, moi.gov.cy, mof.gov.cy, oa.pt, occ.pt, cysec.gov.cy,
+             # 2026-09-29, W40 queue (gob.es covers every Spanish government site):
+             "gob.es", "boe.es", "cyprusbar.org", "cyprusbarassociation.org", "investinspain.org", "portugalglobal.pt",
+             "diariodarepublica.pt", "gov.uk"]   # bar and accountants' orders count as official
 
 firms:
   - id: plmj
@@ -63,3 +122,1035 @@ firms:
     website: dilex.ltd
     aliases: ["Dilex LTD", "dilex.ltd"]   # matching is case-insensitive: one spelling per alias
     own: true
+
+  # ---------------------------------------------------------------------------------------------------------------
+  # v1 2026-09-29 from the W40 queue (first live day, 392 answers; candidates with ≥3 hits in published classes).
+  # Proposed by the operator's assistant; applied by the owner 2026-09-29 (network brands as one row, Balcells brands credited);
+  # "CHECK" in a note marks an open question (unverified countries are left empty until checked).
+  # ---------------------------------------------------------------------------------------------------------------
+
+  # Portugal
+  - id: vpa
+    canonical: "VPA Advogados"
+    kind: firm
+    type: law
+    country: "PT"
+    website: vpa.pt
+    aliases: ["VPA", "Venture Partners Advogados", "VPA — Venture Partners Advogados"]
+    note: "bare 'Venture Partners' is blocked (common phrase)"
+  - id: csc
+    canonical: "CSC Advogada"
+    kind: firm
+    type: law
+    country: "PT"
+    website: cscadvogada.com
+    aliases: ["Clara Silva da Costa", "Clara da Costa", "CSC Lawyers"]
+  - id: defesa_legal
+    canonical: "Defesa Legal"
+    kind: firm
+    type: law
+    country: "PT"
+    website: defesalegal.pt
+    aliases: ["DefesaLegal", "DefesaLegal.pt"]
+    note: "second domain: entry defesa_legal_com"
+  - id: abreu
+    canonical: "Abreu Advogados"
+    kind: firm
+    type: law
+    country: "PT"
+    website: abreuadvogados.com
+  - id: caiado_guerreiro
+    canonical: "Caiado Guerreiro"
+    kind: firm
+    type: law
+    country: "PT"
+    website: caiadoguerreiro.com
+    aliases: ["Caiado Immigration"]
+  - id: lamares_capela
+    canonical: "Lamares, Capela & Associados"
+    kind: firm
+    type: law
+    country: "PT"
+    website: lamarescapela.pt
+    aliases: ["Capela & Associados", "Lamares Capela"]
+  - id: reis_pellicano
+    canonical: "Reis & Pellicano"
+    kind: firm
+    type: law
+    country: "PT"
+    website: reispellicano.com
+  - id: araujo_associados
+    canonical: "Araújo & Associados"
+    kind: firm
+    type: law
+    country: "PT"
+    website: araujoassociados.pt
+    note: "bare 'Araújo' is blocked (also in 'Pacheco Araújo')"
+  - id: abrs
+    canonical: "ABRS Advogados"
+    kind: firm
+    type: law
+    country: "PT"
+    website: abrs.pt
+    aliases: ["ABRS"]
+  - id: almeida_associados
+    canonical: "Almeida & Associados"
+    kind: firm
+    type: law
+    country: "PT"
+    website: ada-legal.com
+    note: "bare 'Almeida' is blocked (also in 'Vieira de Almeida')"
+  - id: oliveira_lawyers
+    canonical: "Oliveira Lawyers"
+    kind: firm
+    type: law
+    country: "PT"
+    website: oliveiralawyers.com
+  - id: belim
+    canonical: "BELIM Tax Law"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: belim.pt
+    aliases: ["BELIM Tax Law Office", "BELIM"]
+  - id: msp_lawyer
+    canonical: "MSP Lawyer"
+    kind: firm
+    type: law
+    country: ""
+    website: msplawyer.io
+    aliases: ["MSP Lawyers"]
+    note: "CHECK: country (guess PT)"
+  - id: edge_il
+    canonical: "EDGE International Lawyers"
+    kind: firm
+    type: law
+    country: "PT"
+    website: edge-il.com
+  - id: viana_consultancy
+    canonical: "Viana Consultancy"
+    kind: firm
+    type: law
+    country: "PT"
+    website: vianaconsultancy.com
+    note: "covers visa. and visas.vianaconsultancy.com"
+  - id: my_visa_portugal
+    canonical: "My Visa Portugal"
+    kind: firm
+    type: relocation
+    country: "PT"
+    website: myvisaportugal.com
+  - id: jbp_legal_support
+    canonical: "JBP – Legal Support"
+    kind: firm
+    type: law
+    country: "PT"
+    website: legalsupport.pt
+    aliases: ["JBP Legal Support"]
+  - id: taxbordr
+    canonical: "Taxbordr"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: taxbordr.com
+  - id: hvr
+    canonical: "HVR Business Consulting"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: hvrbusinessconsulting.com
+  - id: fresh_legal
+    canonical: "Fresh Legal"
+    kind: firm
+    type: law
+    country: ""
+    website: fresh-legal.com
+    aliases: ["FRESH Legal Group"]
+    note: "CHECK: country (guess PT)"
+  - id: fresh_portugal
+    canonical: "Fresh Portugal"
+    kind: firm
+    type: tax
+    country: "PT"
+    note: "CHECK: may be the same firm as Fresh Legal"
+  - id: growin_portugal
+    canonical: "GrowIN Portugal"
+    kind: firm
+    type: formation
+    country: "PT"
+    website: growinportugal.com
+    aliases: ["Grow in Portugal"]
+  - id: portugal_and_co
+    canonical: "Portugal & Co"
+    kind: firm
+    type: formation
+    country: "PT"
+    website: portugal-and-co.com
+  - id: contas_da_catarina
+    canonical: "Contas da Catarina"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: contasdacatarina.pt
+  - id: pedro_ramos_costa
+    canonical: "Pedro Ramos Costa – Contabilidade"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: prccontabilidade.com
+    aliases: ["Pedro Ramos Costa"]
+  - id: elevate_accounting
+    canonical: "Elevate Accounting"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: elevateaccounting.pt
+  - id: gfdl
+    canonical: "GFDL Advogados"
+    kind: firm
+    type: law
+    country: "PT"
+    website: gfdl.legal
+    aliases: ["GFDL"]
+  - id: pacheco_araujo
+    canonical: "Pacheco Araújo"
+    kind: firm
+    type: law
+    country: "PT"
+    website: pachecoaraujo.com
+  - id: nsm_lawyers
+    canonical: "NSM Lawyers"
+    kind: firm
+    type: law
+    country: "PT"
+    website: nsmlawyers.pt
+  - id: caldeira_pires
+    canonical: "Caldeira Pires"
+    kind: firm
+    type: law
+    country: "PT"
+    website: caldeirapires.pt
+  - id: goalseek
+    canonical: "GoalSeek"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: goalseek.pt
+    aliases: ["Goal Seek"]
+  - id: rhj_accountants
+    canonical: "RHJ Accountants"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: rhjaccountants.com
+  - id: prifinance
+    canonical: "Prifinance"
+    kind: firm
+    type: formation
+    country: "PT"
+    website: prifinance.com
+  - id: pil_services
+    canonical: "PIL Services"
+    kind: firm
+    type: relocation
+    country: "PT"
+    website: pil-services.com
+  - id: inlis
+    canonical: "INLIS Consulting"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: inlis.pt
+    aliases: ["INLIS"]
+  - id: dma_tax
+    canonical: "DMA Tax Accounting Advisory"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: dmatax.pt
+  - id: experts_for_expats
+    canonical: "Experts for Expats"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: expertsforexpats.com
+  - id: rauva
+    canonical: "Rauva"
+    kind: firm
+    type: other
+    country: "PT"
+    website: rauva.com
+    note: "accounting app for freelancers"
+  - id: getlda
+    canonical: "GetLDA.pt"
+    kind: firm
+    type: formation
+    country: "PT"
+    website: getlda.pt
+    aliases: ["GetLDA"]
+  - id: conta_plena
+    canonical: "Conta Plena"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: contaplena.pt
+  - id: alves_jacob
+    canonical: "Alves Jacob"
+    kind: firm
+    type: law
+    country: "PT"
+    website: alvesjacob.com
+    aliases: ["Alves Jacob Law Firm"]
+  - id: thiago_vieira
+    canonical: "Thiago Vieira Immigration Lawyer"
+    kind: firm
+    type: law
+    country: "PT"
+    website: immigrationlawyer.pt
+    aliases: ["Thiago Vieira"]
+  - id: bcaun
+    canonical: "BCAun"
+    kind: firm
+    type: formation
+    country: "PT"
+    website: bcaun.pt
+  - id: portugal_taxes
+    canonical: "Portugal Taxes (portugaltaxes.pt)"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: portugaltaxes.pt
+    note: "the name is a common phrase ('Portugal taxes …'): matched only as written with the domain"
+  - id: anchor_pt
+    canonical: "Anchor (anchor.pt)"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: anchor.pt
+    note: "one common word: matched only with the domain; CHECK what it offers"
+  - id: visas_pt
+    canonical: "Visas.pt"
+    kind: firm
+    type: relocation
+    country: "PT"
+    website: visas.pt
+  - id: movingto
+    canonical: "Movingto"
+    kind: firm
+    type: relocation
+    country: "PT"
+    website: movingto.com
+    note: "CHECK: movingto.com is also in unmatched_ignore_domains as a guide site; engines name it as a firm"
+  - id: prime_legal
+    canonical: "Prime Legal"
+    kind: firm
+    type: law
+    country: "PT"
+    note: "CHECK: no website in the answers"
+  - id: morais_leitao
+    canonical: "Morais Leitão"
+    kind: firm
+    type: law
+    country: "PT"
+    aliases: ["Morais Leitão, Galvão Teles, Soares da Silva"]
+  - id: vda
+    canonical: "VdA – Vieira de Almeida"
+    kind: firm
+    type: law
+    country: "PT"
+    aliases: ["VdA", "Vieira de Almeida"]
+  - id: servulo
+    canonical: "Sérvulo & Associados"
+    kind: firm
+    type: law
+    country: "PT"
+  - id: cms_portugal
+    canonical: "CMS Portugal"
+    kind: firm
+    type: law
+    country: "PT"
+    website: cms.law
+    aliases: ["CMS Rui Pena & Arnaut"]
+    note: "bare 'CMS' left out (content management system)"
+  - id: oncorporate
+    canonical: "OnCorporate"
+    kind: firm
+    type: formation
+    country: ""
+    website: oncorporate.com
+    note: "CHECK: country (guess ?)"
+  - id: belion_partners
+    canonical: "Belion Partners"
+    kind: firm
+    type: tax
+    country: "PT"
+    website: belionpartners.com
+    note: "CHECK: name from a link title only"
+
+  # Spain
+  - id: balcells
+    canonical: "Balcells Group"
+    kind: firm
+    type: law
+    country: "ES"
+    website: balcellsgroup.com
+    aliases: ["Balcells"]
+    note: "brands BMC Consulting and Immigration Spain credited here (entries below)"
+  - id: pellicer_heredia
+    canonical: "Pellicer & Heredia"
+    kind: firm
+    type: law
+    country: "ES"
+    website: pellicerheredia.com
+  - id: agm_abogados
+    canonical: "AGM Abogados"
+    kind: firm
+    type: law
+    country: "ES"
+    website: agmabogados.com
+    note: "bare 'AGM' is not an alias (annual general meeting)"
+  - id: espana_abogados
+    canonical: "España Abogados"
+    kind: firm
+    type: law
+    country: "ES"
+    website: espanaabogados.com
+    note: "bare 'España' is blocked"
+  - id: strong_abogados
+    canonical: "Strong Abogados"
+    kind: firm
+    type: law
+    country: "ES"
+    website: strongabogados.com
+    note: "bare 'Strong' is blocked"
+  - id: wiselegal
+    canonical: "Wiselegal"
+    kind: firm
+    type: law
+    country: "ES"
+    website: wiselegal.es
+    aliases: ["Wise Legal"]
+  - id: lullius
+    canonical: "Lullius Partners"
+    kind: firm
+    type: tax
+    country: "ES"
+    website: lullius.com
+    aliases: ["Lullius"]
+  - id: lawants
+    canonical: "Lawants"
+    kind: firm
+    type: law
+    country: "ES"
+    website: lawants.com
+    note: "CHECK: legal platform or firm"
+  - id: perez_parras
+    canonical: "Pérez Parras Economists & Lawyers"
+    kind: firm
+    type: tax
+    country: "ES"
+    website: perezparras.com
+    aliases: ["Pérez Parras"]
+  - id: platinum_legal
+    canonical: "Platinum Legal Spain"
+    kind: firm
+    type: law
+    country: "ES"
+    website: platinumlegalspain.com
+    aliases: ["Platinum Legal"]
+  - id: parastoo
+    canonical: "Parastoo Legal Group"
+    kind: firm
+    type: law
+    country: "ES"
+    website: parastoolegalgroup.com
+    aliases: ["Parastoo"]
+  - id: garcia_de_ceca
+    canonical: "García de Ceca"
+    kind: firm
+    type: law
+    country: "ES"
+    website: garciadececa.com
+    aliases: ["García de Ceca Abogados"]
+  - id: taxadora
+    canonical: "Taxadora"
+    kind: firm
+    type: tax
+    country: "ES"
+    website: taxadora.com
+  - id: vega_abogado
+    canonical: "Vega Abogado"
+    kind: firm
+    type: law
+    country: "ES"
+    website: vegaabogado.com
+  - id: del_canto
+    canonical: "Del Canto Chambers"
+    kind: firm
+    type: law
+    country: "ES"
+    website: delcantochambers.com
+  - id: taxpats
+    canonical: "Taxpats"
+    kind: firm
+    type: tax
+    country: "ES"
+    website: taxpats.es
+  - id: migratur
+    canonical: "Migratur"
+    kind: firm
+    type: relocation
+    country: "ES"
+    website: migratur.es
+  - id: sterna
+    canonical: "Sterna Abogados"
+    kind: firm
+    type: law
+    country: "ES"
+    website: abogadoextranjeriamadrid.net
+  - id: bl_partners
+    canonical: "BL Partners"
+    kind: firm
+    type: tax
+    country: "ES"
+    website: beckhamtaxlaw.com
+  - id: diaz_associates
+    canonical: "Díaz & Associates"
+    kind: firm
+    type: law
+    country: "UK"
+    website: diazandassociates.uk
+    note: "London-based Spanish lawyers"
+  - id: tejada
+    canonical: "Tejada Solicitors"
+    kind: firm
+    type: law
+    country: ""
+    website: tejadasolicitors.com
+    note: "CHECK: country (guess ES)"
+  - id: zimmer_legal
+    canonical: "Zimmer Legal"
+    kind: firm
+    type: law
+    country: "ES"
+    website: zimmerlegal.com
+  - id: lexbeckham
+    canonical: "LexBeckham"
+    kind: firm
+    type: tax
+    country: "ES"
+    website: lexbeckham.com
+  - id: martinez_cardos
+    canonical: "Martínez Cardós"
+    kind: firm
+    type: law
+    country: "ES"
+    website: martinezcardos.es
+  - id: alcala_59
+    canonical: "Alcalá 59"
+    kind: firm
+    type: law
+    country: "ES"
+    website: alcala59.com
+  - id: ippailaw
+    canonical: "IppaiLaw"
+    kind: firm
+    type: law
+    country: "ES"
+    website: ippailaw.com
+  - id: interlex
+    canonical: "Interlex Abogados Internacionales"
+    kind: firm
+    type: law
+    country: "ES"
+    aliases: ["Interlex"]
+  - id: latitude_law
+    canonical: "Latitude Law"
+    kind: firm
+    type: law
+    country: ""
+    website: latitudelaw.com
+    note: "CHECK: country (guess UK)"
+  - id: cd_solicitors
+    canonical: "C&D Solicitors"
+    kind: firm
+    type: law
+    country: ""
+    website: cdsolicitors.com
+    note: "CHECK: country (guess ES)"
+  - id: spain_company_formation
+    canonical: "Spain Company Formation (spain-company-formation.com)"
+    kind: firm
+    type: formation
+    country: "ES"
+    website: spain-company-formation.com
+    note: "the name is a common phrase: matched only with the domain"
+  - id: perez_llorca
+    canonical: "Pérez-Llorca"
+    kind: firm
+    type: law
+    country: "ES"
+    website: perezllorca.com
+  - id: cuatrecasas
+    canonical: "Cuatrecasas"
+    kind: firm
+    type: law
+    country: "ES"
+    website: cuatrecasas.com
+  - id: holaexpat
+    canonical: "HolaExpat"
+    kind: firm
+    type: relocation
+    country: "ES"
+    website: holaexpat.es
+    note: "CHECK"
+  - id: costa_luz
+    canonical: "Costa Luz Lawyers"
+    kind: firm
+    type: law
+    country: "ES"
+    website: costaluzlawyers.com
+    note: "CHECK: name from the domain only"
+
+  # Cyprus
+  - id: philippou
+    canonical: "Philippou Law Firm"
+    kind: firm
+    type: law
+    country: "CY"
+    website: philippoulaw.com
+    aliases: ["Philippou Law"]
+    note: "Paphos; bare 'Philippou' left out (Papaphilippou is another firm)"
+  - id: gk_law
+    canonical: "George K. Konstantinou Law Firm"
+    kind: firm
+    type: law
+    country: "CY"
+    website: gk-lawfirm.com
+    aliases: ["GK Law Firm", "Konstantinou Law Firm", "George K. Konstantinou", "George K."]
+    note: "Limassol"
+  - id: koufettas
+    canonical: "Koufettas Law"
+    kind: firm
+    type: law
+    country: "CY"
+    website: koufettaslaw.com
+    aliases: ["Harris Koufettas & Associates", "Koufettas"]
+    note: "Paphos"
+  - id: demetriades_law
+    canonical: "Demetriades Law"
+    kind: firm
+    type: law
+    country: "CY"
+    website: demetriadeslaw.com
+    note: "CHECK: may be the same firm as Andreas Demetriades & Co LLC"
+  - id: andreas_demetriades
+    canonical: "Andreas Demetriades & Co LLC"
+    kind: firm
+    type: law
+    country: "CY"
+    note: "CHECK: may be the same firm as Demetriades Law"
+  - id: stylianou
+    canonical: "Stylianou Law"
+    kind: firm
+    type: law
+    country: "CY"
+    website: stylianou.law
+    aliases: ["Stelios Stylianou Law Firm"]
+  - id: diogenous
+    canonical: "Georgios Diogenous & Associates LLC"
+    kind: firm
+    type: law
+    country: "CY"
+    website: diogenouslaw.com
+    aliases: ["Diogenous & Associates"]
+  - id: agp_law
+    canonical: "AGP Law"
+    kind: firm
+    type: law
+    country: "CY"
+    website: agplaw.com
+    aliases: ["A.G. Paphitis & Co. LLC"]
+  - id: nikita_partners
+    canonical: "Nikita & Partners"
+    kind: firm
+    type: law
+    country: "CY"
+    website: nikitapartners.com.cy
+    aliases: ["Nikita Partners"]
+  - id: ktc
+    canonical: "KTC"
+    kind: firm
+    type: formation
+    country: "CY"
+    website: ktc.com.cy
+  - id: meridian_trust
+    canonical: "Meridian Trust"
+    kind: firm
+    type: formation
+    country: "CY"
+    website: meridian-trust.com
+  - id: evidentrust
+    canonical: "Evidentrust Financial"
+    kind: firm
+    type: tax
+    country: "CY"
+    website: evidentrust.com
+    aliases: ["Evidentrust"]
+  - id: cyause
+    canonical: "CyAuSe"
+    kind: firm
+    type: tax
+    country: "CY"
+    website: cyprusaccountants.com.cy
+    aliases: ["CYAUSE Audit Services"]
+    note: "'Cyprus Audit Services' and 'Cyprus Accountants' left out (common phrases)"
+  - id: easycorporate
+    canonical: "EasyCorporate"
+    kind: firm
+    type: formation
+    country: "CY"
+    website: easycorporate.com.cy
+  - id: georghadjis
+    canonical: "Andreas Georghadjis LLC"
+    kind: firm
+    type: law
+    country: "CY"
+    website: lloydslaw.com
+    aliases: ["Lloyds Law", "Lloyds Law Firm"]
+  - id: karitzis
+    canonical: "Karitzis Legal"
+    kind: firm
+    type: law
+    country: "CY"
+    website: karitzis.com
+  - id: pamboridis
+    canonical: "Pamboridis LLC"
+    kind: firm
+    type: law
+    country: "CY"
+    website: pamboridis.com
+  - id: pl_law
+    canonical: "PL Law"
+    kind: firm
+    type: law
+    country: "CY"
+    website: pllaw.com.cy
+  - id: adamides
+    canonical: "G. Adamides & Co"
+    kind: firm
+    type: tax
+    country: "CY"
+    website: gadamides.com
+    aliases: ["G. Adamides Audit Ltd"]
+  - id: savva
+    canonical: "Savva & Associates"
+    kind: firm
+    type: tax
+    country: "CY"
+    website: savvacyprus.com
+  - id: asterisk
+    canonical: "Asterisk Corporate Services"
+    kind: firm
+    type: formation
+    country: "CY"
+    website: asterisk.cy
+  - id: chambers_co
+    canonical: "Chambers & Co"
+    kind: firm
+    type: formation
+    country: ""
+    website: chambersandco.com
+    note: "CHECK: country (guess CY)"
+  - id: kesidis
+    canonical: "Kesidis Law Firm"
+    kind: firm
+    type: law
+    country: "CY"
+    website: kesidislaw.com
+    aliases: ["Kesidis Law"]
+  - id: phoenix_accounting
+    canonical: "Phoenix Accounting"
+    kind: firm
+    type: tax
+    country: "CY"
+    website: phoenixaccounting.cy
+  - id: highworth
+    canonical: "Highworth"
+    kind: firm
+    type: formation
+    country: "CY"
+    website: highworth.cy
+  - id: aspen_trust
+    canonical: "Aspen Trust Group"
+    kind: firm
+    type: formation
+    country: ""
+    website: aspentrust.com
+    aliases: ["Aspen Trust", "The Aspen Trust Group"]
+    note: "CHECK: country (guess CY)"
+  - id: elias_neocleous
+    canonical: "Elias Neocleous & Co LLC"
+    kind: firm
+    type: law
+    country: "CY"
+    note: "bare 'Neocleous' left out (Andreas Neocleous is another firm)"
+  - id: michael_kyprianou
+    canonical: "Michael Kyprianou & Co LLC"
+    kind: firm
+    type: law
+    country: "CY"
+    aliases: ["Michael Kyprianou"]
+  - id: ibccs
+    canonical: "IBCCS Tax"
+    kind: firm
+    type: tax
+    country: ""
+    website: ibccs.tax
+    aliases: ["IBCCS"]
+    note: "CHECK: country (guess CY)"
+  - id: asc_law
+    canonical: "ASC Law Firm"
+    kind: firm
+    type: law
+    country: ""
+    website: asclawfirm.com
+    note: "CHECK: country (guess CY)"
+  - id: makrides
+    canonical: "Makrides Tax Consultants"
+    kind: firm
+    type: tax
+    country: "CY"
+    website: makridestaxconsultants.com
+  - id: willowserve
+    canonical: "Willowserve Solutions"
+    kind: firm
+    type: tax
+    country: ""
+    website: willowserve.solutions
+    note: "CHECK: country (guess CY)"
+  - id: tax_com_cy
+    canonical: "Cyprus Tax Advisory (tax.com.cy)"
+    kind: firm
+    type: tax
+    country: "CY"
+    website: tax.com.cy
+    aliases: ["Tax.com.cy"]
+    note: "the name is a common phrase: matched with the domain"
+  - id: euro_start
+    canonical: "Euro Start Entreprises"
+    kind: firm
+    type: formation
+    country: ""
+    website: eurostartentreprises.com
+    note: "CHECK: country (guess CY)"
+  - id: woborders
+    canonical: "Woborders"
+    kind: firm
+    type: formation
+    country: ""
+    website: woborders.agency
+    note: "CHECK: country (guess CY)"
+  - id: cfs_formations
+    canonical: "CFS Formations"
+    kind: firm
+    type: formation
+    country: "CY"
+    website: cfsformations.com
+    note: "CHECK"
+
+  # International networks and multi-country firms
+  - id: pwc
+    canonical: "PwC"
+    kind: firm
+    type: tax
+    country: "INT"
+    website: pwc.com
+    aliases: ["PwC Spain"]
+    note: "brand level; country member sites are entries below"
+  - id: kpmg
+    canonical: "KPMG"
+    kind: firm
+    type: tax
+    country: "INT"
+    website: kpmg.com
+    aliases: ["KPMG Cyprus", "KPMG Portugal", "KPMG Spain"]
+    note: "brand level"
+  - id: ey
+    canonical: "EY"
+    kind: firm
+    type: tax
+    country: "INT"
+    website: ey.com
+    aliases: ["EY Cyprus", "EY Portugal", "EY Spain", "Ernst & Young"]
+    note: "brand level"
+  - id: deloitte
+    canonical: "Deloitte"
+    kind: firm
+    type: tax
+    country: "INT"
+    website: deloitte.com
+    aliases: ["Deloitte Cyprus", "Deloitte Portugal", "Deloitte Spain"]
+    note: "brand level"
+  - id: grant_thornton
+    canonical: "Grant Thornton"
+    kind: firm
+    type: tax
+    country: "INT"
+    aliases: ["Grant Thornton Cyprus"]
+    note: "brand level"
+  - id: baker_tilly
+    canonical: "Baker Tilly"
+    kind: firm
+    type: tax
+    country: "INT"
+    aliases: ["Baker Tilly Cyprus"]
+    note: "brand level"
+  - id: tmf
+    canonical: "TMF Group"
+    kind: firm
+    type: formation
+    country: "INT"
+    website: tmf-group.com
+    aliases: ["TMF Cyprus"]
+  - id: csb_group
+    canonical: "CSB Group"
+    kind: firm
+    type: formation
+    country: "INT"
+    website: csbgroup.com
+    note: "CHECK"
+  - id: bbcincorp
+    canonical: "BBCIncorp"
+    kind: firm
+    type: formation
+    country: "INT"
+    website: bbcincorp.com
+    note: "CHECK"
+  - id: giambrone
+    canonical: "Giambrone & Partners"
+    kind: firm
+    type: law
+    country: "INT"
+    website: giambronelaw.com
+    aliases: ["Giambrone Law", "Giambrone"]
+    note: "second domain: entry giambrone_contact"
+  - id: hudson_mckenzie
+    canonical: "Hudson McKenzie"
+    kind: firm
+    type: law
+    country: "UK"
+    website: hudsonmckenzie.com
+  - id: harvey_law
+    canonical: "Harvey Law Group"
+    kind: firm
+    type: law
+    country: "INT"
+    website: harveylawcorporation.com
+    aliases: ["Harvey Law Group Portugal"]
+    note: "CHECK: website"
+  - id: lexidy
+    canonical: "Lexidy Law Boutique"
+    kind: firm
+    type: law
+    country: "INT"
+    website: lexidy.com
+    aliases: ["Lexidy", "Lexidy Legal", "Lexidy Portugal"]
+    note: "Spain and Portugal"
+  - id: sovereign_group
+    canonical: "Sovereign Group"
+    kind: firm
+    type: formation
+    country: "INT"
+    website: sovereigngroup.com
+    aliases: ["Sovereign Group Portugal", "Sovereign Portugal"]
+  - id: global_citizen
+    canonical: "Global Citizen Solutions"
+    kind: firm
+    type: relocation
+    country: "INT"
+    website: globalcitizensolutions.com
+  - id: immigrant_invest
+    canonical: "Immigrant Invest"
+    kind: firm
+    type: relocation
+    country: "INT"
+    website: immigrantinvest.com
+  - id: lead_force
+    canonical: "Leadforce"
+    kind: firm
+    type: formation
+    country: "INT"
+    website: lead-force.io
+  - id: flat_fee_corp
+    canonical: "Flat Fee Corp"
+    kind: firm
+    type: formation
+    country: "INT"
+    website: flatfeecorp.com
+    aliases: ["Flatfee Corp"]
+
+  # persons and brands credited to a firm above
+  - id: diogo_capela
+    canonical: "Diogo Capela"
+    kind: person
+    parent: lamares_capela
+  - id: ana_sofia_lamares
+    canonical: "Ana Sofia Lamares"
+    kind: person
+    parent: lamares_capela
+  - id: miguel_pires
+    canonical: "Miguel Pires"
+    kind: person
+    parent: msp_lawyer
+  - id: patricia_viana
+    canonical: "Patrícia Viana"
+    kind: person
+    parent: viana_consultancy
+  - id: gabriela_cabianca
+    canonical: "Gabriela Cabianca"
+    kind: person
+    parent: my_visa_portugal
+  - id: jose_de_brito_pires
+    canonical: "José de Brito Pires"
+    kind: person
+    parent: jbp_legal_support
+  - id: felix_espana
+    canonical: "Félix José España González"
+    kind: person
+    parent: espana_abogados
+  - id: bmc_consulting
+    canonical: "BMC Consulting"
+    kind: product
+    parent: balcells
+    website: bm.consulting
+    aliases: ["BMC", "BM Consulting"]
+    note: "CHECK: answers write 'Balcells Group (BMC Consulting)'"
+  - id: immigration_spain
+    canonical: "Immigration Spain"
+    kind: product
+    parent: balcells
+    website: immigrationspain.es
+    note: "CHECK: answers write 'Immigration Spain (Balcells Group)'"
+  - id: pwc_portugal
+    canonical: "PwC Portugal"
+    kind: product
+    parent: pwc
+    website: pwc.pt
+  - id: pwc_cyprus
+    canonical: "PwC Cyprus"
+    kind: product
+    parent: pwc
+    website: pwc.com.cy
+  - id: defesa_legal_com
+    canonical: "defesalegal.com"
+    kind: product
+    parent: defesa_legal
+    website: defesalegal.com
+    note: "second domain of Defesa Legal"
+  - id: giambrone_contact
+    canonical: "contactgiambronelaw.com"
+    kind: product
+    parent: giambrone
+    website: contactgiambronelaw.com
+    note: "second domain of Giambrone & Partners"
