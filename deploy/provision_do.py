@@ -1,8 +1,8 @@
-"""Provision the lab server on DigitalOcean — idempotent: ssh key, droplet, firewall. Prints the public IPv4.
+"""Provision the lab server on DigitalOcean — idempotent: ssh key, droplet, firewall, droplet backups. Prints the public IPv4.
 
 Usage (from the repo root, DIGITALOCEAN_TOKEN in .env):
     uv run python deploy/provision_do.py            # create what is missing, print the IP
-    uv run python deploy/provision_do.py --status   # only show what exists
+    uv run python deploy/provision_do.py --status   # only show what exists (droplet, backup policy, backup images)
 
 Parameters live at the top of this file. The private key never leaves the operator's machine; only the public key is
 uploaded. The droplet's IP is written to data/host.txt (git-ignored) for deploy/install.sh and the rsync commands.
@@ -26,6 +26,10 @@ NAME = "bymachines-lab"                 # droplet, firewall and tag name
 REGION = "ams3"                         # Amsterdam (EU); alternatives: fra1, lon1
 SIZE = "s-1vcpu-1gb"                    # $6/month on 2026-09-28 (1 vCPU, 1 GiB, 25 GiB SSD)
 IMAGE = "ubuntu-24-04-x64"              # Ubuntu 24.04 LTS ships Python 3.12
+# DigitalOcean backups (owner decision 2026-09-29): daily images, kept 7 days, window 12:00–16:00 UTC — after the 06:00 UTC
+# run. 30 % of the droplet price = $1.80/month on 2026-09-29 (API /droplets/backups/supported_policies; weekly = 20 %).
+# The database is also copied to the operator's Mac every day: deploy/backup_to_mac.py.
+BACKUP_POLICY = {"plan": "daily", "hour": 12}
 SSH_KEY_NAME = "bymachines-lab-operator"
 SSH_KEY_PATH = Path.home() / ".ssh" / "bymachines_lab_ed25519"
 API = "https://api.digitalocean.com/v2"
@@ -74,7 +78,8 @@ def ensure_droplet(c: httpx.Client, key_id: int) -> dict:
     d = find_droplet(c)
     if d is None:
         r = c.post("/droplets", json={"name": NAME, "region": REGION, "size": SIZE, "image": IMAGE, "ssh_keys": [key_id],
-                                      "backups": False, "ipv6": True, "monitoring": True, "tags": [NAME]})
+                                      "backups": True, "backup_policy": BACKUP_POLICY, "ipv6": True, "monitoring": True,
+                                      "tags": [NAME]})
         r.raise_for_status()
         d = r.json()["droplet"]
         print(f"created droplet {NAME} ({SIZE}, {REGION}, {IMAGE}) id={d['id']}")
@@ -119,6 +124,52 @@ def ensure_firewall(c: httpx.Client, droplet_id: int, web: bool = False) -> None
     print(f"created firewall {NAME}: inbound 22 only")
 
 
+def backup_policy(c: httpx.Client, droplet_id: int) -> dict:
+    r = c.get(f"/droplets/{droplet_id}/backups/policy")
+    r.raise_for_status()
+    return r.json().get("policy", {})
+
+
+def wait_action(c: httpx.Client, action: dict, what: str) -> None:
+    for _ in range(60):
+        status = action.get("status")
+        if status == "completed":
+            return
+        if status == "errored":
+            raise SystemExit(f"{what}: DigitalOcean action {action.get('id')} errored")
+        time.sleep(5)
+        action = c.get(f"/actions/{action['id']}").json()["action"]
+    raise SystemExit(f"{what}: DigitalOcean action {action.get('id')} not completed in 5 minutes")
+
+
+def ensure_backups(c: httpx.Client, droplet_id: int) -> dict:
+    """Droplet backups on with BACKUP_POLICY: enable when off, change the plan or window when it differs."""
+    p = backup_policy(c, droplet_id)
+    have = p.get("backup_policy") or {}
+    if not p.get("backup_enabled"):
+        kind = "enable_backups"
+    elif any(have.get(k) != v for k, v in BACKUP_POLICY.items()):
+        kind = "change_backup_policy"
+    else:
+        return p
+    r = c.post(f"/droplets/{droplet_id}/actions", json={"type": kind, "backup_policy": BACKUP_POLICY})
+    r.raise_for_status()
+    wait_action(c, r.json()["action"], kind)
+    p = backup_policy(c, droplet_id)
+    print(f"droplet backups: {kind} → {p.get('backup_policy')}, next window {p.get('next_backup_window')}")
+    return p
+
+
+def backups_summary(c: httpx.Client, droplet_id: int) -> dict:
+    p = backup_policy(c, droplet_id)
+    r = c.get(f"/droplets/{droplet_id}/backups", params={"per_page": 200})
+    r.raise_for_status()
+    images = r.json().get("backups", [])
+    newest = max((i.get("created_at", "") for i in images), default=None)
+    return {"enabled": p.get("backup_enabled"), "policy": p.get("backup_policy"), "next_window": p.get("next_backup_window"),
+            "images": len(images), "newest_image": newest}
+
+
 def main() -> int:
     load_dotenv()
     token = os.environ.get("DIGITALOCEAN_TOKEN")
@@ -128,11 +179,15 @@ def main() -> int:
     with api(token) as c:
         if "--status" in sys.argv:
             d = find_droplet(c)
-            print("droplet:", {k: d.get(k) for k in ("id", "status", "region", "size_slug")} | {"ip": public_ipv4(d)} if d else None)
+            print("droplet:", {k: d.get(k) for k in ("id", "status", "size_slug")} | {"region": d["region"]["slug"], "ip": public_ipv4(d)}
+                  if d else None)
+            if d:
+                print("backups:", backups_summary(c, int(d["id"])))
             return 0
         key_id = ensure_ssh_key(c, ensure_local_key())
         d = ensure_droplet(c, key_id)
         ensure_firewall(c, int(d["id"]), web="--web" in sys.argv)
+        ensure_backups(c, int(d["id"]))
         ip = public_ipv4(d)
         HOST_FILE.parent.mkdir(parents=True, exist_ok=True)
         HOST_FILE.write_text(f"{ip}\n")

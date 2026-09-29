@@ -21,7 +21,8 @@ uv run lab status --db data/smoke.sqlite
 uv run lab extract --db data/smoke.sqlite                    # citations → mentions / unmatched with the current firm list (re-runnable)
 uv run lab unmatched --db data/smoke.sqlite                  # weekly review queue under the current rules → grow config/firms/<vertical>.yaml
 uv run lab export --db data/smoke.sqlite --week 2026-W40     # re-extracts the week (+ previous) and writes the SPEC §6 tables, schema 2 (and runs.csv); --no-extract to skip
-uv run python deploy/provision_do.py      # DigitalOcean droplet + firewall (see deploy/README.md for install and sync)
+uv run python deploy/provision_do.py      # DigitalOcean droplet + firewall + daily backups (see deploy/README.md for install and sync)
+uv run python deploy/backup_to_mac.py --install   # daily verified copy of the database to this Mac (launchd); --status to check
 ```
 
 ## What is here
@@ -33,7 +34,7 @@ uv run python deploy/provision_do.py      # DigitalOcean droplet + firewall (see
 
 ## What will never be here
 
-API keys, the raw-answer database, firm contacts. Keys go in `.env` (see `.env.example`); data lives in `data/`, which is git-ignored. Weekly exports are published on the site.
+API keys, the raw-answer database, firm contacts. Keys go in `.env` (see `.env.example`); data lives in `data/`, which is git-ignored; the server's `data/` is backed up daily (`deploy/README.md` §3). Weekly exports are published on the site.
 
 ## Method in one paragraph
 
