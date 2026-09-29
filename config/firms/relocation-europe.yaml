@@ -75,13 +75,12 @@ unmatched_ignore_terms: [Portugal, Spain, Cyprus, Lisbon, Porto, Madrid, Barcelo
                          "Share Capital", "Substance Requirements", "Tax Residency", "Corporate Tax", "AIMA Representation",
                          "Activity Registration", "NIE Application", "Exempt", "Under Cyprus", "Navigating the Cyprus",
                          "Navigating the Portugal Digital Nomad", "Navigating the Portugal Golden Visa", "Southern Europe",
-                         "English-speaking Spanish", "Big Four", "Big Four & International Networks", "Finance Matters", "SaaS",
-                         "New York",
+                         "English-speaking Spanish", "Big Four", "Big Four & International Networks", "SaaS", "New York",
                          # 2026-09-29, W40 queue — firm names that are common phrases (the firm is listed with its domain):
                          "Portugal Taxes", "Spain Company Formation", "Cyprus Tax Advisory", "Cyprus Audit Services",
                          "Cyprus Accountants", "Visa Portugal",
                          # 2026-09-29, W40 queue — block the bare variant of a listed firm (surname or word shared with other firms):
-                         "Venture Partners", "España", "Strong", "Araújo", "Almeida"]
+                         "Venture Partners", "España", "Strong", "Araújo", "Almeida", "Demetriades"]
 source_types:
   directory: [lawzana.com, legal500.com, chambers.com, clutch.co, sortlist.com, justia.com, hg.org, martindale.com, lexology.com,
               leadersleague.com, iclg.com, expatriates.com,
@@ -486,6 +485,59 @@ firms:
     country: "PT"
     website: belionpartners.com
     note: "CHECK: name from a link title only"
+  - id: chagas
+    canonical: "Chagas Advocacia"
+    kind: firm
+    type: law
+    country: "PT"
+    website: chagasadvogados.pt
+  - id: all_finance_matters
+    canonical: "All Finance Matters"
+    kind: firm
+    type: tax
+    country: "PT"
+    note: "CHECK: a firm or a category label in Gemini answers"
+  - id: accountiva
+    canonical: "Accountiva"
+    kind: firm
+    type: tax
+    country: ""
+    note: "CHECK: country (guess PT)"
+  - id: finzo
+    canonical: "Finzo"
+    kind: firm
+    type: tax
+    country: ""
+    note: "CHECK: country (guess PT)"
+  - id: ana_bruno
+    canonical: "Ana Bruno & Associados"
+    kind: firm
+    type: law
+    country: "PT"
+  - id: cvsp
+    canonical: "CVSP Advogados"
+    kind: firm
+    type: law
+    country: "PT"
+    website: cvsp.pt
+  - id: jk_law
+    canonical: "JK Law Advogados"
+    kind: firm
+    type: law
+    country: "PT"
+    website: advogadoonline.pt
+  - id: lla_legal
+    canonical: "LLA Legal"
+    kind: firm
+    type: law
+    country: "PT"
+    website: llalegal.pt
+  - id: pares
+    canonical: "PARES Advogados"
+    kind: firm
+    type: law
+    country: "PT"
+    website: paresadvogados.com
 
   # Spain
   - id: balcells
@@ -711,6 +763,34 @@ firms:
     country: "ES"
     website: costaluzlawyers.com
     note: "CHECK: name from the domain only"
+  - id: lextax
+    canonical: "LexTax"
+    kind: firm
+    type: tax
+    country: "ES"
+    website: lextax.es
+  - id: dpll
+    canonical: "DPLL Tax & Legal"
+    kind: firm
+    type: tax
+    country: "ES"
+  - id: duguech_dip
+    canonical: "Duguech & Dip Abogados"
+    kind: firm
+    type: law
+    country: "ES"
+  - id: satya_legal
+    canonical: "Satya Legal"
+    kind: firm
+    type: law
+    country: "ES"
+    website: satyalegal.es
+  - id: martinez_echevarria
+    canonical: "Martínez-Echevarría Lawyers"
+    kind: firm
+    type: law
+    country: ""
+    note: "CHECK: country (guess ES) (answers call it a firm with offices in Portugal)"
 
   # Cyprus
   - id: philippou
@@ -743,6 +823,7 @@ firms:
     type: law
     country: "CY"
     website: demetriadeslaw.com
+    aliases: ["Demetriades LLC"]
     note: "CHECK: may be the same firm as Andreas Demetriades & Co LLC"
   - id: andreas_demetriades
     canonical: "Andreas Demetriades & Co LLC"
@@ -756,7 +837,7 @@ firms:
     type: law
     country: "CY"
     website: stylianou.law
-    aliases: ["Stelios Stylianou Law Firm"]
+    aliases: ["Stelios Stylianou Law Firm", "Stelios A. Stylianou & Co", "Stylianou & Co"]
   - id: diogenous
     canonical: "Georgios Diogenous & Associates LLC"
     kind: firm
@@ -958,6 +1039,39 @@ firms:
     country: "CY"
     website: cfsformations.com
     note: "CHECK"
+  - id: danos
+    canonical: "Danos & Associates LLC"
+    kind: firm
+    type: law
+    country: "CY"
+    website: cypruslegalservices.eu
+    aliases: ["Danos & Associates"]
+  - id: frangos_law
+    canonical: "Frangos Law"
+    kind: firm
+    type: law
+    country: "CY"
+    website: frangoslaw.com
+  - id: charalampous
+    canonical: "K. Charalampous & Co LLC"
+    kind: firm
+    type: law
+    country: "CY"
+    website: kclawco.com
+    aliases: ["Charalampous & Co"]
+  - id: ermina_papasolomou
+    canonical: "Ermina Papasolomou & Co LLC"
+    kind: firm
+    type: law
+    country: "CY"
+    website: erminaplaw.com
+  - id: dn_law
+    canonical: "DN Law Partners"
+    kind: firm
+    type: law
+    country: ""
+    website: dnlawpartners.com
+    note: "CHECK: country (guess CY)"
 
   # International networks and multi-country firms
   - id: pwc
@@ -1089,6 +1203,13 @@ firms:
     country: "INT"
     website: flatfeecorp.com
     aliases: ["Flatfee Corp"]
+  - id: lizo_tax
+    canonical: "Lizo Tax"
+    kind: firm
+    type: tax
+    country: ""
+    website: lizotax.com
+    note: "CHECK: country (guess INT) (US tax for Americans in Portugal)"
 
   # persons and brands credited to a firm above
   - id: diogo_capela
