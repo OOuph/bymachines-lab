@@ -62,7 +62,7 @@ engines:
     env: [PERPLEXITY_API_KEY]
 
   gemini:
-    enabled: true                    # owner decision 2026-09-28 (SPEC Q6 → a): run from 2026-10-01; Gemini API terms revisited at the legal reading 12–18.10
+    enabled: true                    # owner decision 2026-09-28 (SPEC Q6 → a): run from the first live day (29.09 since the owner moved the start); Gemini API terms revisited at the legal reading 12–18.10
     name: Gemini (Google Search grounding)
     api: gemini_generate_content     # POST https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent (legacy, fully supported)
     model: gemini-3.8-flash

@@ -14,7 +14,7 @@ vertical: relocation-europe
 panel: human
 frozen_at: null            # informational; the record of the freeze is config/panel-hashes.txt (`lab freeze`), the runner refuses a panel whose hash is not there
 runs_per_week: 7           # 1 run per day; run_idx = ISO weekday (1..7)
-start_date: 2026-10-01     # first live runs Thu 01.10 (SPEC §13); not planned before this UTC date
+start_date: 2026-09-29     # first live runs Tue 29.09 (owner 29.09, moved from Thu 01.10 before any data; SPEC §13); not planned before this UTC date
 default_location: lisbon
 
 classes:

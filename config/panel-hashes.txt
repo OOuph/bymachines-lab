@@ -1,1 +1,3 @@
 2026-09-28 b953dcc62dfceaef5e96670afe44e75f50c8dcf010d0ceddd72da3962d05d697 panels/relocation-europe.yaml
+# 2026-09-29 amendment before any data (owner): start_date 2026-10-01 -> 2026-09-29; prompts, classes and every other line unchanged
+2026-09-29 b85aad5d5380e73b9b7a108214d877a187171cf36e3435ea95068b6d6e22c6b5 panels/relocation-europe.yaml
