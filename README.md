@@ -8,7 +8,7 @@ The instrument is vertical-agnostic: a vertical is a config (prompt panel + firm
 
 ## Status
 
-`SPEC.md` v1 approved by the owner on 2026-09-28; `PLAN.md` says how, in vertical slices with tests written before code. **S1 (panel v0)** and **S2 (four engines, catch-up window, budget guard, systemd schedule, VPS deploy)** are built: config validation, the freeze journal, adapters for OpenAI Responses `web_search`, Perplexity Agent API (`perplexity/sonar`), Gemini `generateContent` grounding and DataForSEO Google AI Mode, the SQLite store, an idempotent day planner and runner, `lab validate | freeze | run | status | export`, `deploy/` for a small VPS. S3 (extraction, metrics, weekly export) and S4 (census) follow. This build runs without any online publication.
+`SPEC.md` v1 approved by the owner on 2026-09-28; `PLAN.md` says how, in vertical slices with tests written before code. **S1 (panel v0)**, **S2 (four engines, catch-up window, budget guard, systemd schedule, VPS deploy)** and **S3 (extraction, metrics, weekly export)** are built: config validation, the freeze journal, adapters for OpenAI Responses `web_search`, Perplexity Agent API (`perplexity/sonar`), Gemini `generateContent` grounding and DataForSEO Google AI Mode, the SQLite store, an idempotent day planner and runner, alias matching with an unmatched queue, Wilson / Jaccard / source-share metrics, CSV + JSON exports, `lab validate | freeze | run | status | extract | export | unmatched`, `deploy/` for a small VPS. S4 (census) follows. This build runs without any online publication.
 
 ```bash
 uv sync                                   # Python 3.12, httpx, pyyaml, pytest
@@ -18,7 +18,9 @@ uv run lab freeze --panel config/panels/relocation-europe.yaml   # record the sh
 uv run lab run --dry-run                  # today's plan and its cost estimate (refuses unfrozen panels)
 uv run lab run --allow-unfrozen --db data/smoke.sqlite --limit 5 --runs 2 --engine openai --location lisbon --panel human
 uv run lab status --db data/smoke.sqlite
-uv run lab export --db data/smoke.sqlite --week 2026-W40
+uv run lab extract --db data/smoke.sqlite                    # citations → mentions / unmatched with the current firm list (re-runnable)
+uv run lab unmatched --db data/smoke.sqlite                  # weekly review queue under the current rules → grow config/firms/<vertical>.yaml
+uv run lab export --db data/smoke.sqlite --week 2026-W40     # re-extracts the week (+ previous) and writes the SPEC §6 tables, schema 2 (and runs.csv); --no-extract to skip
 uv run python deploy/provision_do.py      # DigitalOcean droplet + firewall (see deploy/README.md for install and sync)
 ```
 

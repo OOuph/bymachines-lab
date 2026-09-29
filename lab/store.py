@@ -69,6 +69,29 @@ CREATE TABLE IF NOT EXISTS citations (
     source_type TEXT, rules_version TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_citations_run ON citations (run_id);
+CREATE TABLE IF NOT EXISTS brands (
+    id TEXT PRIMARY KEY, canonical TEXT NOT NULL, kind TEXT NOT NULL, parent_id TEXT, country TEXT, type TEXT, website TEXT,
+    own INTEGER NOT NULL DEFAULT 0, first_seen_week TEXT
+);
+CREATE TABLE IF NOT EXISTS mentions (
+    run_id INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE, brand_id TEXT NOT NULL, position INTEGER NOT NULL,
+    matched_alias TEXT, rules_version TEXT NOT NULL, UNIQUE (run_id, brand_id, rules_version)
+);
+CREATE INDEX IF NOT EXISTS ix_mentions_run ON mentions (run_id);
+CREATE TABLE IF NOT EXISTS unmatched (
+    run_id INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE, candidate TEXT NOT NULL, source TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'new', rules_version TEXT NOT NULL, UNIQUE (run_id, candidate, source, rules_version)
+);
+CREATE TABLE IF NOT EXISTS extractions (
+    run_id INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE, rules_version TEXT NOT NULL, n_mentions INTEGER NOT NULL,
+    refusal INTEGER NOT NULL DEFAULT 0, extracted_at TEXT NOT NULL, UNIQUE (run_id, rules_version)
+);
+CREATE TABLE IF NOT EXISTS costs (
+    iso_week TEXT NOT NULL, engine_id TEXT NOT NULL, calls INTEGER NOT NULL, cost_usd REAL NOT NULL, UNIQUE (iso_week, engine_id)
+);
+CREATE TABLE IF NOT EXISTS ui_control (
+    iso_week TEXT NOT NULL, prompt_id TEXT NOT NULL, engine TEXT NOT NULL, checked_at TEXT, brands_json TEXT, notes TEXT
+);
 """
 
 RUN_COLUMNS = ("ts_utc", "iso_week", "prompt_id", "engine_id", "location", "run_idx", "status", "raw_json",
@@ -212,6 +235,115 @@ class Store:
         row = self.conn.execute(
             "SELECT COALESCE(SUM(n_search), 0) FROM runs WHERE engine_id=? AND substr(ts_utc, 1, 7)=?", (engine_id, year_month)).fetchone()
         return int(row[0] or 0)
+
+    # ---- extraction (S3) ---------------------------------------------------------------------------------------------
+
+    def upsert_brand(self, bid: str, canonical: str, kind: str, parent: str | None, country: str, type_: str, website: str,
+                     own: bool, week: str) -> None:
+        with self._lock:
+            self.conn.execute(
+                "INSERT INTO brands (id, canonical, kind, parent_id, country, type, website, own, first_seen_week) VALUES (?,?,?,?,?,?,?,?,?) "
+                "ON CONFLICT(id) DO UPDATE SET canonical=excluded.canonical, kind=excluded.kind, parent_id=excluded.parent_id, "
+                "country=excluded.country, type=excluded.type, website=excluded.website, own=excluded.own",
+                (bid, canonical, kind, parent, country, type_, website, int(own), week))
+            self.conn.commit()
+
+    def prompt_panels(self) -> dict[str, str]:
+        return {r["id"]: r["panel_name"] for r in self.conn.execute("SELECT id, panel_name FROM prompts")}
+
+    def prompt_meta(self) -> dict[str, tuple[str, str]]:
+        """prompt id → (class, panel kind) for every prompt ever registered — prompts that left the config (a re-frozen twist
+        file) keep their class and kind here."""
+        return {r["id"]: (r["class"], r["kind"] or "") for r in self.conn.execute(
+            "SELECT p.id, p.class, pa.kind FROM prompts p LEFT JOIN panels pa ON pa.name = p.panel_name")}
+
+    def ok_runs_with_citations(self, iso_week: str) -> list[dict[str, Any]]:
+        rows = [dict(r) for r in self.conn.execute(
+            "SELECT id, prompt_id, engine_id, location, run_idx, answer_text FROM runs WHERE iso_week=? AND status='ok' ORDER BY id", (iso_week,))]
+        cites = self.citations_for_week(iso_week)
+        for r in rows:
+            r["citations"] = [(i + 1, url, domain) for i, (url, domain) in enumerate(cites.get(int(r["id"]), []))]
+        return rows
+
+    def replace_extraction(self, run_id: int, rules_version: str, mentions: list[tuple[str, int, str]],
+                           unmatched: list[tuple[str, str]], refusal: bool, now: str) -> None:
+        with self._lock:
+            self.conn.execute("DELETE FROM mentions WHERE run_id=? AND rules_version=?", (run_id, rules_version))
+            self.conn.execute("DELETE FROM unmatched WHERE run_id=? AND rules_version=?", (run_id, rules_version))
+            self.conn.executemany("INSERT INTO mentions (run_id, brand_id, position, matched_alias, rules_version) VALUES (?,?,?,?,?)",
+                                  [(run_id, b, pos, alias, rules_version) for b, pos, alias in mentions])
+            self.conn.executemany("INSERT OR IGNORE INTO unmatched (run_id, candidate, source, status, rules_version) VALUES (?,?,?,'new',?)",
+                                  [(run_id, c, s, rules_version) for c, s in unmatched])
+            self.conn.execute(
+                "INSERT INTO extractions (run_id, rules_version, n_mentions, refusal, extracted_at) VALUES (?,?,?,?,?) "
+                "ON CONFLICT(run_id, rules_version) DO UPDATE SET n_mentions=excluded.n_mentions, refusal=excluded.refusal, extracted_at=excluded.extracted_at",
+                (run_id, rules_version, len(mentions), int(refusal), now))
+            self.conn.commit()
+
+    def has_extraction(self, iso_week: str, rules_version: str) -> bool:
+        row = self.conn.execute(
+            "SELECT COUNT(*) FROM extractions e JOIN runs r ON r.id = e.run_id WHERE r.iso_week=? AND e.rules_version=?", (iso_week, rules_version)).fetchone()
+        return int(row[0]) > 0
+
+    def extraction_coverage(self, iso_week: str, rules_version: str) -> tuple[int, int]:
+        """(ok runs of the week that have an extraction under these rules, ok runs of the week). Equal = complete."""
+        ok = int(self.conn.execute("SELECT COUNT(*) FROM runs WHERE iso_week=? AND status='ok'", (iso_week,)).fetchone()[0])
+        ext = int(self.conn.execute(
+            "SELECT COUNT(*) FROM extractions e JOIN runs r ON r.id = e.run_id WHERE r.iso_week=? AND r.status='ok' AND e.rules_version=?",
+            (iso_week, rules_version)).fetchone()[0])
+        return ext, ok
+
+    def purge_unmatched_other_rules(self, iso_week: str, rules_version: str) -> int:
+        """The unmatched queue is a work list, not history: after a re-extraction only the current rules' rows stay."""
+        with self._lock:
+            cur = self.conn.execute(
+                "DELETE FROM unmatched WHERE rules_version<>? AND run_id IN (SELECT id FROM runs WHERE iso_week=?)", (rules_version, iso_week))
+            self.conn.commit()
+            return int(cur.rowcount)
+
+    def mentions_for_week(self, iso_week: str, rules_version: str) -> dict[int, list[str]]:
+        out: dict[int, list[str]] = {}
+        for r in self.conn.execute(
+                "SELECT m.run_id, m.brand_id FROM mentions m JOIN runs r ON r.id = m.run_id WHERE r.iso_week=? AND m.rules_version=? ORDER BY m.run_id, m.position",
+                (iso_week, rules_version)):
+            out.setdefault(int(r["run_id"]), []).append(r["brand_id"])
+        return out
+
+    def extractions_for_week(self, iso_week: str, rules_version: str) -> dict[int, tuple[int, bool]]:
+        return {int(r["run_id"]): (int(r["n_mentions"]), bool(r["refusal"])) for r in self.conn.execute(
+            "SELECT e.run_id, e.n_mentions, e.refusal FROM extractions e JOIN runs r ON r.id = e.run_id WHERE r.iso_week=? AND e.rules_version=?",
+            (iso_week, rules_version))}
+
+    def citations_for_week(self, iso_week: str) -> dict[int, list[tuple[str, str]]]:
+        out: dict[int, list[tuple[str, str]]] = {}
+        for r in self.conn.execute(
+                "SELECT c.run_id, c.url, c.domain FROM citations c JOIN runs r ON r.id = c.run_id WHERE r.iso_week=? ORDER BY c.run_id, c.position", (iso_week,)):
+            out.setdefault(int(r["run_id"]), []).append((r["url"], r["domain"]))
+        return out
+
+    def runs_for_export(self, iso_week: str) -> list[dict[str, Any]]:
+        return [dict(r) for r in self.conn.execute(
+            "SELECT id, prompt_id, engine_id, location, run_idx, status, cost_usd FROM runs WHERE iso_week=? ORDER BY id", (iso_week,))]
+
+    def upsert_cost(self, iso_week: str, engine_id: str, calls: int, cost_usd: float) -> None:
+        with self._lock:
+            self.conn.execute("INSERT INTO costs (iso_week, engine_id, calls, cost_usd) VALUES (?,?,?,?) "
+                              "ON CONFLICT(iso_week, engine_id) DO UPDATE SET calls=excluded.calls, cost_usd=excluded.cost_usd",
+                              (iso_week, engine_id, int(calls), float(cost_usd)))
+            self.conn.commit()
+
+    def unmatched_summary(self, iso_week: str | None = None, limit: int = 50, rules_version: str | None = None) -> list[dict[str, Any]]:
+        """Candidates under the CURRENT rules only (a firm added to the list leaves the queue at the next `lab extract`)."""
+        sql = ("SELECT u.candidate, u.source, COUNT(*) AS n FROM unmatched u JOIN runs r ON r.id = u.run_id WHERE u.status='new' ")
+        args: tuple = ()
+        if iso_week:
+            sql += "AND r.iso_week=? "
+            args = (iso_week,)
+        if rules_version:
+            sql += "AND u.rules_version=? "
+            args = (*args, rules_version)
+        sql += "GROUP BY u.candidate, u.source ORDER BY n DESC, u.candidate LIMIT ?"
+        return [dict(r) for r in self.conn.execute(sql, (*args, limit))]
 
     def count_ok(self, iso_week: str, prompt_ids: Iterable[str]) -> int:
         ids = list(prompt_ids)

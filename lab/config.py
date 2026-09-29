@@ -121,6 +121,7 @@ class Vertical:
     firms: list[Firm]
     locations: dict[str, Location]
     engines: EnginesConfig
+    extraction: dict[str, Any] = field(default_factory=dict)   # unmatched_ignore_domains, unmatched_ignore_terms, source_types
 
     def prompt_by_id(self) -> dict[str, Prompt]:
         return {p.id: p for panel in self.panels for p in panel.prompts}
@@ -289,6 +290,22 @@ def load_panel(path: Path, config_dir: Path, errors: list[str]) -> Panel:
     )
 
 
+def load_extraction_settings(path: Path, errors: list[str]) -> dict[str, Any]:
+    """Extraction settings kept next to the firm list: ignored domains/terms for the unmatched queue, source-type domain rules."""
+    if not path.exists():
+        return {}
+    raw = _load_yaml(path)
+    out: dict[str, Any] = {}
+    out["unmatched_ignore_domains"] = _str_list(raw.get("unmatched_ignore_domains"), f"{path.name}: unmatched_ignore_domains", errors)
+    out["unmatched_ignore_terms"] = _str_list(raw.get("unmatched_ignore_terms"), f"{path.name}: unmatched_ignore_terms", errors)
+    st = raw.get("source_types") or {}
+    if not isinstance(st, dict):
+        errors.append(f"{path.name}: source_types must be a mapping of type → list of domains")
+        st = {}
+    out["source_types"] = {str(k): _str_list(v, f"{path.name}: source_types.{k}", errors) for k, v in st.items()}
+    return out
+
+
 def load_firms(path: Path, errors: list[str]) -> list[Firm]:
     if not path.exists():
         errors.append(f"missing firm list: {path}")
@@ -327,7 +344,8 @@ def load_vertical(config_dir: Path | str, vertical: str) -> Vertical:
         raise ConfigError(f"missing human panel: {panel_paths[0]}")
     panels = [load_panel(p, config_dir, errors) for p in panel_paths if p.exists()]
     firms = load_firms(config_dir / "firms" / f"{vertical}.yaml", errors)
-    v = Vertical(name=vertical, config_dir=config_dir, panels=panels, firms=firms, locations=locations, engines=engines)
+    extraction = load_extraction_settings(config_dir / "firms" / f"{vertical}.yaml", errors)
+    v = Vertical(name=vertical, config_dir=config_dir, panels=panels, firms=firms, locations=locations, engines=engines, extraction=extraction)
     errors.extend(validate(v))
     if errors:
         raise ConfigError("config invalid:\n  - " + "\n  - ".join(errors))
@@ -382,9 +400,11 @@ def validate(v: Vertical) -> list[str]:
             errors.append(f"{p.panel_name}: prompt {p.id} need/country differ from its twin {twin.id} "
                           f"({p.need!r}/{p.country!r} vs {twin.need!r}/{twin.country!r})")
 
-    # firms
+    # firms — collisions are checked on the SAME keys the extractor matches on (normalised text + derived variant), so two
+    # firms can never both be credited for one string ("Miranda & Associados" / "Miranda & Sá" → both "miranda" would be)
+    from lab.extract import alias_keys                                   # lazy: extract imports config at module level
+
     ids: dict[str, Firm] = {}
-    alias_owner: dict[str, str] = {}
     for f in v.firms:
         if not f.id:
             errors.append("firm without id")
@@ -394,16 +414,27 @@ def validate(v: Vertical) -> list[str]:
         ids[f.id] = f
         if f.kind not in FIRM_KINDS:
             errors.append(f"firm {f.id}: kind '{f.kind}' not in {FIRM_KINDS}")
-        for a in [f.canonical, *f.aliases]:
-            if not a:
-                continue
-            key = normalize_alias(a)
-            if key in alias_owner and alias_owner[key] != f.id:
-                errors.append(f"alias '{a}' is shared by firms {alias_owner[key]} and {f.id}")
-            alias_owner.setdefault(key, f.id)
     for f in v.firms:
         if f.parent is not None and f.parent not in ids:
             errors.append(f"firm {f.id}: parent '{f.parent}' is not a known firm id")
+    blocked = v.extraction.get("unmatched_ignore_terms") or []
+    key_owner: dict[str, tuple[str, str]] = {}                            # key → (credited id, alias as written)
+    for f in v.firms:
+        credit = f.parent if f.parent and f.parent in ids else f.id
+        for a in [f.canonical, *f.aliases]:
+            if not a:
+                continue
+            keys = alias_keys(a, blocked)
+            if not keys:
+                errors.append(f"firm {f.id}: alias '{a}' is empty after normalisation and can never match")
+                continue
+            if len(keys[0]) < 3 and not (a.isupper() and a.isalpha()):
+                errors.append(f"firm {f.id}: alias '{a}' is too short to match safely (<3 chars); only all-caps acronyms (EY) are allowed")
+            for key in keys:
+                other = key_owner.get(key)
+                if other and other[0] != credit:
+                    errors.append(f"alias '{a}' ({f.id}) collides with '{other[1]}' ({other[0]}) on the matching key '{key}'")
+                key_owner.setdefault(key, (credit, a))
 
     # engines: every model of an enabled engine must have a price row (a call without a price = money spent, answer lost)
     for eid, spec in v.engines.engines.items():

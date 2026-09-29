@@ -13,6 +13,29 @@
 
 schema_version: 1
 vertical: relocation-europe
+
+# Extraction settings (S3). Candidates for the weekly `unmatched` review are cited domains that belong to no firm and
+# capitalised 2–5-word names; these lists keep the queue readable. Grow them from the queue itself, with a date.
+unmatched_ignore_domains: [gov.pt, gov.es, gov.cy, europa.eu, aima.gov.pt, sef.pt, portaldasfinancas.gov.pt, eportugal.gov.pt,
+                           exteriores.gob.es, agenciatributaria.es, moi.gov.cy, mof.gov.cy, oa.pt, occ.pt, cysec.gov.cy,
+                           expatica.com, movingto.com, nomadgate.com, internations.org, expatforum.com, numbeo.com, statista.com,
+                           investopedia.com]
+unmatched_ignore_terms: [Portugal, Spain, Cyprus, Lisbon, Porto, Madrid, Barcelona, Limassol, Nicosia, Europe, European Union, EU, EEA,
+                         Golden Visa, D7 Visa, D8 Visa, D2 Visa, D7, D8, D2, Digital Nomad Visa, Non-Lucrative Visa, Beckham Law, NHR, IFICI, Non-Dom, AIMA, SEF,
+                         ARI, Schengen, Social Security, Tax Identification Number, NIF, NIE, TIE, VAT, United States, United Kingdom, Brazil,
+                         AI, ChatGPT, Google, Gemini, Perplexity, By Machines,
+                         # 2026-09-29, from the smoke-run queue (generic phrases of an assistant's answer, not firms):
+                         Passive Income, Power of Attorney, PoA, Fee Expectations, Home Country, Double Taxation Treaties, DTT,
+                         Cross-Border Tax Awareness, Scope of Representation, Verify Registration, North American, Portuguese Bar Association,
+                         Portuguese Bar, Ordem dos Advogados, Ordem dos Contabilistas Certificados, OCC, Portuguese Tax Authority, CPA, VFS,
+                         Rio de Janeiro, Next Step, Next Steps]
+source_types:
+  directory: [lawzana.com, legal500.com, chambers.com, clutch.co, sortlist.com, justia.com, hg.org, martindale.com, lexology.com,
+              leadersleague.com, iclg.com, expatriates.com]
+  forum: [reddit.com, quora.com, expatforum.com, internations.org, facebook.com]
+  official: [gov.pt, gov.es, gov.cy, europa.eu, aima.gov.pt, sef.pt, portaldasfinancas.gov.pt, eportugal.gov.pt, exteriores.gob.es,
+             agenciatributaria.es, moi.gov.cy, mof.gov.cy, oa.pt, occ.pt, cysec.gov.cy]   # bar and accountants' orders count as official
+
 firms:
   - id: plmj
     canonical: PLMJ

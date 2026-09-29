@@ -1,10 +1,10 @@
 # Deploy — VPS, systemd timer, sync
 
-The panel runs on a small VPS under a systemd timer (daily 06:00 UTC). The operator's machine only develops, tests and reads exports. Nothing listens on 80/443 in this build.
+The panel runs on a small VPS under a systemd timer (daily 06:00 UTC). The operator's machine only develops, tests and reads exports. Ports 80/443 stay closed until the site goes live (`--web`, owner command); the site itself lives in the separate private repository `bymachines-site` (nginx config and install script there).
 
 ## 1. Server
 
-`deploy/provision_do.py` creates the DigitalOcean droplet idempotently (ssh key, droplet `bymachines-lab` in `ams3`, `s-1vcpu-1gb`, Ubuntu 24.04, firewall inbound 22 only) and writes the IP to `data/host.txt` (git-ignored). Any Ubuntu 24.04 box with root ssh works the same way; put its IP in `data/host.txt`.
+`deploy/provision_do.py` creates the DigitalOcean droplet idempotently (ssh key, droplet `bymachines-lab` in `ams3`, `s-1vcpu-1gb`, Ubuntu 24.04, firewall inbound 22 only; `--web` adds 80/443 for the site) and writes the IP to `data/host.txt` (git-ignored). Any Ubuntu 24.04 box with root ssh works the same way; put its IP in `data/host.txt`.
 
 ```bash
 uv run python deploy/provision_do.py            # needs DIGITALOCEAN_TOKEN in .env

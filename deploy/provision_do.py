@@ -86,15 +86,27 @@ def ensure_droplet(c: httpx.Client, key_id: int) -> dict:
     raise SystemExit("droplet did not become active in 5 minutes")
 
 
-def ensure_firewall(c: httpx.Client, droplet_id: int) -> None:
+WEB_PORTS = ("80", "443")            # opened only with --web, i.e. at the site's go-live (SPEC §0, owner decision 2026-09-29)
+
+
+def ensure_firewall(c: httpx.Client, droplet_id: int, web: bool = False) -> None:
+    inbound = [{"protocol": "tcp", "ports": "22", "sources": {"addresses": ["0.0.0.0/0", "::/0"]}}]
+    if web:
+        inbound += [{"protocol": "tcp", "ports": p, "sources": {"addresses": ["0.0.0.0/0", "::/0"]}} for p in WEB_PORTS]
     for f in c.get("/firewalls", params={"per_page": 200}).json().get("firewalls", []):
         if f["name"] == NAME:
             if droplet_id not in f.get("droplet_ids", []):
                 c.post(f"/firewalls/{f['id']}/droplets", json={"droplet_ids": [droplet_id]}).raise_for_status()
+            have = {r.get("ports") for r in f.get("inbound_rules", []) if r.get("protocol") == "tcp"}
+            want = {r["ports"] for r in inbound}
+            if want - have:
+                c.put(f"/firewalls/{f['id']}", json={"name": NAME, "inbound_rules": inbound, "outbound_rules": f["outbound_rules"],
+                                                     "droplet_ids": f.get("droplet_ids", []), "tags": f.get("tags", [])}).raise_for_status()
+                print(f"firewall {NAME}: inbound tcp {sorted(want)} (was {sorted(have)})")
             return
     body = {
         "name": NAME,
-        "inbound_rules": [{"protocol": "tcp", "ports": "22", "sources": {"addresses": ["0.0.0.0/0", "::/0"]}}],
+        "inbound_rules": inbound,
         "outbound_rules": [
             {"protocol": "tcp", "ports": "all", "destinations": {"addresses": ["0.0.0.0/0", "::/0"]}},
             {"protocol": "udp", "ports": "all", "destinations": {"addresses": ["0.0.0.0/0", "::/0"]}},
@@ -120,7 +132,7 @@ def main() -> int:
             return 0
         key_id = ensure_ssh_key(c, ensure_local_key())
         d = ensure_droplet(c, key_id)
-        ensure_firewall(c, int(d["id"]))
+        ensure_firewall(c, int(d["id"]), web="--web" in sys.argv)
         ip = public_ipv4(d)
         HOST_FILE.parent.mkdir(parents=True, exist_ok=True)
         HOST_FILE.write_text(f"{ip}\n")

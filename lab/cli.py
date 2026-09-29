@@ -264,26 +264,64 @@ def cmd_status(args) -> int:
     return EXIT_OK
 
 
+def cmd_extract(args) -> int:
+    load_dotenv()
+    from lab.extract import extract_week
+
+    v = _vertical(args)
+    store = Store(args.db or str(default_db()))
+    weeks = [args.week] if args.week else store.weeks()
+    if not weeks:
+        print("no runs to extract")
+        return EXIT_OK
+    for week in weeks:
+        stats = extract_week(store, v, week)
+        print(f"{week}: runs={stats['runs']} mentions={stats['mentions']} unmatched={stats['unmatched']} rules={stats['rules_version']}"
+              + (f" purged_unmatched={stats['purged_unmatched']}" if stats.get("purged_unmatched") else ""))
+    return EXIT_OK
+
+
 def cmd_export(args) -> int:
     load_dotenv()
+    from lab.export import export_week, write_runs_csv
+    from lab.extract import extract_week
+
     store = Store(args.db or str(default_db()))
     week = args.week
     out_dir = Path(args.out or (data_dir() / "export" / week))
-    out_dir.mkdir(parents=True, exist_ok=True)
-    n_cit = store.n_citations_by_run(week)
-    path = out_dir / "runs.csv"
-    cols = ["iso_week", "prompt_id", "engine_id", "location", "run_idx", "ts_utc", "status", "model", "search", "searched",
-            "catch_up", "cost_usd", "n_citations", "latency_ms", "answer_chars", "error"]
-    n = 0
-    with path.open("w", newline="", encoding="utf-8") as fh:
-        w = csv.writer(fh)
-        w.writerow(cols)
-        for r in store.iter_runs(week):
-            w.writerow([r["iso_week"], r["prompt_id"], r["engine_id"], r["location"], r["run_idx"], r["ts_utc"], r["status"],
-                        r["model"], r["search"], r["searched"], r["catch_up"], f"{r['cost_usd']:.6f}", n_cit.get(int(r["id"]), 0),
-                        r["latency_ms"], len(r["answer_text"] or ""), r["error"] or ""])
-            n += 1
-    print(f"wrote {path} ({n} rows)")
+    if args.raw:
+        path = write_runs_csv(store, week, out_dir)
+        print(f"wrote {path}")
+        return EXIT_OK
+    v = _vertical(args)
+    if not args.no_extract:
+        # export always sees a complete extraction: re-extraction is idempotent and cheap (≈1 min for a full week)
+        for w in (week, previous_iso_week(week)):
+            stats = extract_week(store, v, w)
+            print(f"extract {w}: runs={stats['runs']} mentions={stats['mentions']} rules={stats['rules_version']}")
+    try:
+        paths = export_week(store, v, week, out_dir)
+    except RuntimeError as exc:
+        print(f"REFUSED: {exc}", file=sys.stderr)
+        return EXIT_USAGE
+    print(f"wrote {len(paths)} files to {out_dir}: " + ", ".join(p.name for p in paths))
+    return EXIT_OK
+
+
+def cmd_unmatched(args) -> int:
+    load_dotenv()
+    from lab.extract import rules_version_for
+
+    v = _vertical(args)
+    store = Store(args.db or str(default_db()))
+    rows = store.unmatched_summary(args.week, args.limit, rules_version_for(v.firms))
+    if not rows:
+        print("unmatched queue is empty (under the current rules; run `lab extract` after changing the firm list)")
+        return EXIT_OK
+    print(f"{'n':>4}  {'source':6}  candidate")
+    for r in rows:
+        print(f"{r['n']:4d}  {r['source']:6}  {r['candidate']}")
+    print("add real firms to config/firms/<vertical>.yaml (aliases, kind, parent) or to unmatched_ignore_terms/_domains, then `lab extract`")
     return EXIT_OK
 
 
@@ -320,12 +358,24 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--week")
     p.set_defaults(fn=cmd_status)
 
-    p = sub.add_parser("export", help="S1: raw runs.csv for a week (S3 adds the metric exports)")
+    p = sub.add_parser("extract", help="citations → mentions/unmatched with the current firm list (re-runnable)")
+    p.add_argument("--week", help="ISO week, default every week with runs")
+    p.add_argument("--db")
+    p.set_defaults(fn=cmd_extract)
+
+    p = sub.add_parser("export", help="weekly export: frequencies, sources, stability, our citation, costs, agent_single (+ runs.csv)")
     p.add_argument("--week", required=True)
     p.add_argument("--db")
     p.add_argument("--out")
-    p.add_argument("--raw", action="store_true", default=True)
+    p.add_argument("--raw", action="store_true", help="only the raw runs.csv dump")
+    p.add_argument("--no-extract", action="store_true", help="skip the automatic re-extraction of the week and the previous one")
     p.set_defaults(fn=cmd_export)
+
+    p = sub.add_parser("unmatched", help="candidates for the firm list (weekly manual review)")
+    p.add_argument("--week")
+    p.add_argument("--db")
+    p.add_argument("--limit", type=int, default=50)
+    p.set_defaults(fn=cmd_unmatched)
 
     args = ap.parse_args(argv)
     return int(args.fn(args) or 0)
