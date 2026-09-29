@@ -4,7 +4,7 @@ Open measurement of how AI assistants pick businesses.
 
 By Machines Lab asks a frozen panel of buyer questions to ChatGPT, Gemini, Perplexity and Google AI Mode every day, stores every answer with its citations, and reports which firms get named and how often — with confidence intervals, sources, week-to-week stability and the cost of every run. Zeros are published.
 
-The instrument is vertical-agnostic: a vertical is a config (prompt panel + firm list + locations); the code is shared. Vertical #1: relocation to Europe — immigration lawyers, tax advisors and company-formation agents in Portugal, Spain and Cyprus. Results will appear at https://bymachines.ai/lab/relocation-europe/ from 19 October 2026.
+The instrument is vertical-agnostic: a vertical is a config (prompt panel + firm list + locations); the code is shared. Vertical #1: relocation to Europe — immigration lawyers, tax advisors and company-formation agents in Portugal, Spain and Cyprus. Results are published at https://bymachines.ai/lab/relocation-europe/ since 29 September 2026 and refreshed after every daily run.
 
 ## Status
 
