@@ -16,7 +16,7 @@ from typing import Any, Callable
 import httpx
 
 from lab.config import EngineSpec, Location
-from lab.engines.base import Answer, Citation, EngineError, domain_of
+from lab.engines.base import Answer, Citation, EngineError, _connect_phase_error, domain_of
 
 API_URL = "https://api.openai.com/v1/responses"
 RETRYABLE_STATUS = {408, 409, 429, 500, 502, 503, 504}
@@ -153,7 +153,10 @@ class OpenAIEngine:
             try:
                 resp = self._post(API_URL, json=body, headers=headers, timeout=self.timeout_s)
             except httpx.HTTPError as exc:  # transport errors and timeouts
-                last_error = EngineError(f"transport error: {exc}", retryable=True)
+                if not _connect_phase_error(exc):
+                    # the request may have been delivered and billed: never buy the same answer twice
+                    raise EngineError(f"openai: {type(exc).__name__} after the request may have been delivered — not retried", retryable=False) from exc
+                last_error = EngineError(f"openai: connect error: {exc}", retryable=True)
                 self._backoff(attempt, None)
                 continue
             latency_ms = int((time.monotonic() - t0) * 1000)
@@ -163,7 +166,12 @@ class OpenAIEngine:
                     payload = resp.json()
                 except ValueError as exc:
                     raise EngineError(f"HTTP 200 with unparsable body: {exc}", retryable=False) from exc
-                answer = parse_response(payload, model=model, price=self.price)   # EngineError here carries raw + cost
+                try:
+                    answer = parse_response(payload, model=model, price=self.price)   # EngineError here carries raw + cost
+                except EngineError:
+                    raise
+                except Exception as exc:  # noqa: BLE001 — a parser bug must not lose a paid answer
+                    raise EngineError(f"openai: parse failure {type(exc).__name__}: {exc}", retryable=False, raw=payload) from exc
                 answer.latency_ms = latency_ms
                 return answer
             message = self._error_message(resp)

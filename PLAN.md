@@ -15,6 +15,10 @@ Technical plan: *how*. Vertical slices, each a complete working path, tests writ
 
 Horizontal steps: none. Server, keys and repository are part of S1/S2 and are named explicitly there.
 
+## Status (2026-09-28)
+
+S1 done: 57 tests, live smoke 10/10 on OpenAI, review in a fresh context (2 MAJOR + 12 MINOR found and fixed), committed `16dd58e`. S2 built: 97 tests, live probes of Perplexity and Gemini recorded as local fixtures and run end-to-end through the adapters; DataForSEO blocked on the account verification (error 40104 recorded as a fixture); droplet provisioned and bootstrapped, timer enabled; review in a fresh context pending. Per-engine budget estimates calibrated on live usage.
+
 ## Order and gates
 
 S1 → S2 → S3 run on the same code path (planner → runner → store → extract → export); the agent form rides on S1's config and S3's export — no separate slice. S4 is independent of S2/S3 and can run in parallel once S1's store exists; S6 depends on S3 and S4.

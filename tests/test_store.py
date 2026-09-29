@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from lab.store import RunKey, RunRecord, Store
 
 
@@ -36,6 +38,15 @@ def test_error_row_is_replaced_by_success_and_never_the_reverse():
     assert list(s.iter_runs("2026-W40"))[0]["status"] == "ok"
 
 
+def test_replacing_an_error_row_keeps_the_money_already_paid():
+    s = Store(":memory:")
+    s.save_run(_rec(status="error", error="incomplete", cost_usd=0.028, citations=[]))   # paid, unusable
+    assert s.save_run(_rec(cost_usd=0.045)) == "updated"
+    row = list(s.iter_runs("2026-W40"))[0]
+    assert row["status"] == "ok" and row["cost_usd"] == pytest.approx(0.073)               # both purchases count for the week
+    assert s.week_cost("2026-W40") == pytest.approx(0.073)
+
+
 def test_citations_stored_with_run_and_replaced_on_update():
     s = Store(":memory:")
     s.save_run(_rec(status="error", error="x", citations=[]))
@@ -52,6 +63,27 @@ def test_status_summary_counts_and_cost():
     by_status = {(r["engine_id"], r["status"]): r for r in summary}
     assert by_status[("openai", "ok")]["n"] == 1 and by_status[("openai", "error")]["n"] == 1
     assert by_status[("openai", "ok")]["cost_usd"] == 0.036
+
+
+def test_opening_an_older_database_adds_missing_columns(tmp_path):
+    import sqlite3
+
+    db = tmp_path / "old.sqlite"
+    conn = sqlite3.connect(db)
+    conn.executescript("""
+        CREATE TABLE runs (id INTEGER PRIMARY KEY AUTOINCREMENT, ts_utc TEXT NOT NULL, iso_week TEXT NOT NULL, prompt_id TEXT NOT NULL,
+            engine_id TEXT NOT NULL, location TEXT NOT NULL, run_idx INTEGER NOT NULL, status TEXT NOT NULL, raw_json TEXT, answer_text TEXT,
+            cost_usd REAL NOT NULL DEFAULT 0, error TEXT, panel_sha TEXT, search INTEGER NOT NULL DEFAULT 1, searched INTEGER NOT NULL DEFAULT 0,
+            catch_up INTEGER NOT NULL DEFAULT 0, latency_ms INTEGER, model TEXT);
+        INSERT INTO runs (ts_utc, iso_week, prompt_id, engine_id, location, run_idx, status) VALUES ('2026-09-28T15:00:00Z','2026-W40','P01','openai','lisbon',4,'ok');
+    """)
+    conn.commit()
+    conn.close()
+    s = Store(db)
+    cols = {r[1] for r in s.conn.execute("PRAGMA table_info(runs)")}
+    assert "n_search" in cols
+    assert s.month_search_queries("openai", "2026-09") == 0
+    assert s.save_run(_rec()) == "skipped"      # the old row is intact and still counts as done
 
 
 def test_schema_has_contract_tables():

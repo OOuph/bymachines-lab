@@ -9,7 +9,7 @@ runs_per_week: 7                 # 1 run per day; run_idx = ISO weekday
 weekly_budget_usd: 50            # owner decision 12
 budget_cut_order: [twist, provider_locations_3, agent_core]   # applied in this order when the projection exceeds the cap; agent core last
 provider_locations_reduced: [lisbon, madrid, london]           # strategy §5.2 fallback for the provider class
-concurrency: 4                   # overall in-flight calls
+concurrency: 6                   # overall in-flight calls; DataForSEO standard-queue polls (~5 min each) hold slots, Perplexity is throttled to 1/s anyway
 retries: 3                       # exponential backoff, honours Retry-After
 daily_hour_utc: 6
 catch_up_days: 1                 # SPEC Q7: heal one missed weekday, flag catch_up=1; longer gaps stay gaps
@@ -39,6 +39,8 @@ engines:
       per_1m_cached_input: {gpt-6-sol: 0.20, gpt-6-luna: 0.01}
       per_1m_output: {gpt-6-sol: 10.00, gpt-6-luna: 0.50}
       per_search_call: 0.010         # $10 per 1 000 web_search calls; each action.type == "search" counts
+    estimate_tokens: {input: 16500, output: 500, input_no_search: 300}   # S1 smoke 2026-09-28 (see the global note above)
+    estimate_search_calls: 1.4
     env: [OPENAI_API_KEY]
 
   perplexity:
@@ -55,6 +57,8 @@ engines:
       per_1m_input: {perplexity/sonar: 0.25}
       per_1m_output: {perplexity/sonar: 2.50}
       per_search_call: 0.0025        # $2.50 per 1 000 web_search tool calls
+    estimate_tokens: {input: 3000, output: 500}     # live probe 2026-09-28: 2 593 in / 391 out, $0.0041 per call
+    estimate_search_calls: 1
     env: [PERPLEXITY_API_KEY]
 
   gemini:
@@ -70,6 +74,7 @@ engines:
       per_1m_output: {gemini-3.8-flash: 3.75}
       per_search_query: 0.014        # $14 per 1 000 search queries beyond 5 000 free per month (paid tier); counted from webSearchQueries
       free_search_queries_per_month: 5000
+    estimate_tokens: {input: 500, output: 2200}     # live probe 2026-09-28: 388 prompt tokens (grounded context is free), 1 119 + 1 011 thinking out
     env: [GEMINI_API_KEY]
 
   dataforseo:

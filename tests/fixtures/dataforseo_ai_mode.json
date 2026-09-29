@@ -1,0 +1,76 @@
+{
+  "_fixture_note": "SYNTHETIC — shape follows the DataForSEO docs for /v3/serp/google/ai_mode/live/advanced read on 2026-09-28 (tasks[].result[].items[] of type ai_overview with markdown and nested ai_overview_element.references[]). Replace with a recorded live response once the DataForSEO account is verified.",
+  "version": "0.1.20260901",
+  "status_code": 20000,
+  "status_message": "Ok.",
+  "time": "11.3557 sec.",
+  "cost": 0.004,
+  "tasks_count": 1,
+  "tasks_error": 0,
+  "tasks": [
+    {
+      "id": "09281530-1535-0139-0000-fixture0001",
+      "status_code": 20000,
+      "status_message": "Ok.",
+      "time": "11.2951 sec.",
+      "cost": 0.004,
+      "result_count": 1,
+      "path": ["v3", "serp", "google", "ai_mode", "live", "advanced"],
+      "data": {"api": "serp", "function": "live", "se": "google", "se_type": "ai_mode", "keyword": "best immigration lawyer for a Portugal D7 (passive income) visa", "location_code": 1011742, "language_code": "en", "device": "desktop", "os": "windows"},
+      "result": [
+        {
+          "keyword": "best immigration lawyer for a Portugal D7 (passive income) visa",
+          "type": "ai_mode",
+          "se_domain": "google.com",
+          "location_code": 1011742,
+          "language_code": "en",
+          "check_url": "https://www.google.com/search?q=best+immigration+lawyer+for+a+Portugal+D7+visa&udm=50&uule=fixture",
+          "datetime": "2026-09-28 15:30:00 +00:00",
+          "spell": null,
+          "refinement_chips": null,
+          "item_types": ["ai_overview"],
+          "se_results_count": 0,
+          "items_count": 1,
+          "items": [
+            {
+              "type": "ai_overview",
+              "rank_group": 1,
+              "rank_absolute": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[1]",
+              "markdown": "For a Portugal D7 visa, firms often mentioned include **Example Firm Advogados** in Lisbon [[1]](https://www.example-firm.pt/d7-visa) and **Another Firm** [[2]](https://another-firm.example.com/immigration). Expat guides list both [[1]](https://www.expat-guide.example/portugal-d7-lawyers).",
+              "items": [
+                {
+                  "type": "ai_overview_element",
+                  "position": "left",
+                  "title": null,
+                  "text": "For a Portugal D7 visa, firms often mentioned include Example Firm Advogados in Lisbon and Another Firm.",
+                  "markdown": "For a Portugal D7 visa, firms often mentioned include **Example Firm Advogados** in Lisbon [[1]](https://www.example-firm.pt/d7-visa) and **Another Firm** [[2]](https://another-firm.example.com/immigration).",
+                  "links": null,
+                  "images": null,
+                  "references": [
+                    {"type": "ai_overview_reference", "position": "left", "source": "Example Firm", "domain": "www.example-firm.pt", "url": "https://www.example-firm.pt/d7-visa", "title": "D7 visa lawyers — Example Firm", "text": "We assist with D7 passive income visas."},
+                    {"type": "ai_overview_reference", "position": "left", "source": "Another Firm", "domain": "another-firm.example.com", "url": "https://another-firm.example.com/immigration", "title": "Immigration — Another Firm", "text": "English-speaking immigration lawyers."}
+                  ]
+                },
+                {
+                  "type": "ai_overview_element",
+                  "position": "left",
+                  "title": null,
+                  "text": "Expat guides list both among the most cited options.",
+                  "markdown": "Expat guides list both [[1]](https://www.expat-guide.example/portugal-d7-lawyers).",
+                  "links": null,
+                  "images": null,
+                  "references": [
+                    {"type": "ai_overview_reference", "position": "left", "source": "Expat Guide", "domain": "www.expat-guide.example", "url": "https://www.expat-guide.example/portugal-d7-lawyers", "title": "Best D7 lawyers in Portugal", "text": "A list of D7 lawyers."},
+                    {"type": "ai_overview_reference", "position": "left", "source": "Example Firm", "domain": "www.example-firm.pt", "url": "https://www.example-firm.pt/d7-visa", "title": "D7 visa lawyers — Example Firm", "text": "Duplicate reference of the first element."}
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

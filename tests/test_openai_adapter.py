@@ -174,6 +174,34 @@ def test_ask_gives_up_after_retries(monkeypatch):
     assert "500" in str(ei.value)
 
 
+def test_ask_does_not_retry_after_a_read_timeout_but_retries_connect_errors(openai_search_fixture):
+    import httpx
+
+    calls = []
+
+    def read_timeout(url, json, headers, timeout):
+        calls.append(1)
+        raise httpx.ReadTimeout("timed out reading")          # the answer may have been generated and billed
+
+    engine = OpenAIEngine(api_key="k", model="gpt-6-sol", effort="none", search_context_size="medium",
+                          include_sources=True, price=PRICE, timeout_s=5, retries=3, post=read_timeout, sleep=lambda s: None)
+    with pytest.raises(EngineError) as ei:
+        engine.ask("q", LISBON, {"search": True})
+    assert len(calls) == 1 and not ei.value.retryable
+
+    calls.clear()
+
+    def connect_then_ok(url, json, headers, timeout):
+        calls.append(1)
+        if len(calls) == 1:
+            raise httpx.ConnectError("refused")                # never reached the server → retry is free
+        return _FakeResponse(200, openai_search_fixture)
+
+    engine = OpenAIEngine(api_key="k", model="gpt-6-sol", effort="none", search_context_size="medium",
+                          include_sources=True, price=PRICE, timeout_s=5, retries=3, post=connect_then_ok, sleep=lambda s: None)
+    assert engine.ask("q", LISBON, {"search": True}).searched and len(calls) == 2
+
+
 def test_ask_does_not_retry_client_errors():
     calls = []
 

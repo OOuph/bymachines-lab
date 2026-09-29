@@ -1,7 +1,8 @@
 """Runner (SPEC S-A): execute a plan with bounded concurrency, store every result immediately, stop gracefully.
 
 Engine calls run in worker threads; all SQLite writes happen in the calling thread as results arrive, so a crash
-after any row leaves a consistent database and the next `lab run` plans only the missing cells.
+after any row leaves a consistent database and the next `lab run` plans only the missing cells. Engines with a monthly
+free search quota (Gemini) get the per-query surcharge here, from the month's counter in the database.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from lab.config import EngineSpec
 from lab.engines.base import Answer, EngineError, EngineLike
 from lab.planner import PlannedRun
 from lab.store import RunRecord, Store
@@ -50,7 +52,7 @@ def _record(pr: PlannedRun, answer: Answer | None, error: str | None, latency_ms
         answer_text=answer.text, cost_usd=float(answer.cost_usd), error=None, panel_sha=pr.panel_sha,
         search=int(bool(pr.options.get("search", True))), searched=int(answer.searched),
         catch_up=int(pr.options.get("catch_up", 0)), latency_ms=int(answer.latency_ms or latency_ms), model=answer.model,
-        citations=[(c.position, c.url, c.domain, c.title) for c in answer.citations],
+        citations=[(c.position, c.url, c.domain, c.title) for c in answer.citations], n_search=int(answer.n_search),
     )
 
 
@@ -63,10 +65,26 @@ def _call(engine: EngineLike, pr: PlannedRun) -> tuple[PlannedRun, Answer | None
         return pr, None, f"{type(exc).__name__}: {exc}", None, 0.0
 
 
+def search_surcharge(store: Store, spec: EngineSpec | None, engine_id: str, ts_utc: str, n_search: int) -> float:
+    """Per-query fee for the searches beyond an engine's monthly free quota (Gemini: 5 000 free, then per query)."""
+    if spec is None or n_search <= 0:
+        return 0.0
+    free = spec.price.get("free_search_queries_per_month")
+    per_query = float(spec.price.get("per_search_query") or 0.0)
+    if free is None or per_query <= 0:
+        return 0.0
+    used = store.month_search_queries(engine_id, ts_utc[:7])
+    billable = max(0, used + n_search - int(free))
+    return min(n_search, billable) * per_query
+
+
 def run_plan(plan: list[PlannedRun], engines: Mapping[str, EngineLike], store: Store, *, concurrency: int = 1,
-             stop_event: threading.Event | None = None) -> RunStats:
+             stop_event: threading.Event | None = None, specs: Mapping[str, EngineSpec] | None = None) -> RunStats:
     stats = RunStats()
     stop_event = stop_event or threading.Event()
+    for engine in engines.values():
+        if hasattr(engine, "stop_event"):
+            engine.stop_event = stop_event          # adapters with long polls (DataForSEO queue) end early on a graceful stop
     queue = list(plan)
     in_flight: set[Future] = set()
     started = dt.datetime.now(dt.timezone.utc)
@@ -75,6 +93,10 @@ def run_plan(plan: list[PlannedRun], engines: Mapping[str, EngineLike], store: S
         pr, answer, error, raw, paid = fut.result()
         rec = _record(pr, answer, error, 0, raw=raw, cost_usd=paid)
         try:
+            if rec.status == "ok" and specs is not None:
+                extra = search_surcharge(store, specs.get(pr.engine_id), pr.engine_id, rec.ts_utc, rec.n_search)
+                if extra:
+                    rec.cost_usd = round(rec.cost_usd + extra, 6)
             action = store.save_run(rec)
         except Exception as exc:  # noqa: BLE001 — one failed write must not discard the other in-flight answers
             stats.store_failures += 1
@@ -91,9 +113,10 @@ def run_plan(plan: list[PlannedRun], engines: Mapping[str, EngineLike], store: S
             stats.cost_usd = round(stats.cost_usd + rec.cost_usd, 6)
         else:
             stats.skipped += 1
-        log.info("run %s/%s/%s/%s/%s status=%s cost=%.4f citations=%d searched=%s latency_ms=%s%s",
+        log.info("run %s/%s/%s/%s/%s status=%s cost=%.4f citations=%d searched=%s n_search=%d catch_up=%d latency_ms=%s%s",
                  pr.key.iso_week, pr.key.prompt_id, pr.key.engine_id, pr.key.location, pr.key.run_idx, rec.status,
-                 rec.cost_usd, len(rec.citations), rec.searched, rec.latency_ms, f" error={error}" if error else "")
+                 rec.cost_usd, len(rec.citations), rec.searched, rec.n_search, rec.catch_up, rec.latency_ms,
+                 f" error={error}" if error else "")
 
     with ThreadPoolExecutor(max_workers=max(1, concurrency)) as pool:
         while queue or in_flight:

@@ -1,0 +1,13 @@
+# /etc/systemd/system/lab.timer — fires lab.service daily at 06:00 UTC (SPEC §4: ISO week in UTC, run at 06:00 UTC)
+[Unit]
+Description=By Machines Lab — daily panel timer (06:00 UTC)
+
+[Timer]
+OnCalendar=*-*-* 06:00:00 UTC
+# if the server was down at 06:00, run as soon as it is back (the planner's catch-up window handles the day)
+Persistent=true
+RandomizedDelaySec=120
+Unit=lab.service
+
+[Install]
+WantedBy=timers.target

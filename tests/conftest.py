@@ -19,7 +19,7 @@ ENGINES = {
     "concurrency": 2,
     "retries": 3,
     "daily_hour_utc": 6,
-    "catch_up_days": 1,
+    "catch_up_days": 0,   # S1 tests assume "today only"; S2 catch-up tests set the window explicitly
     "default_search_context_size": "medium",
     "estimate_tokens": {"input": 10000, "output": 1000},
     "engines": {

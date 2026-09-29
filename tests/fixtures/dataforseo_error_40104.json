@@ -1,0 +1,11 @@
+{
+  "version": "0.1.20260917",
+  "status_code": 40104,
+  "status_message": "Please verify your account before using the API. You can complete verification in the user panel: https://app.dataforseo.com/ .",
+  "time": "0 sec.",
+  "cost": 0,
+  "tasks_count": 0,
+  "tasks_error": 0,
+  "tasks": null,
+  "_fixture_note": "Recorded live DataForSEO error 2026-09-28: account not verified (status_code 40104). Used to test non-retryable task errors."
+}

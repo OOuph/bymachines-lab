@@ -1,0 +1,21 @@
+# /etc/systemd/system/lab.service — one daily panel run (started by lab.timer). Install: deploy/install.sh deploy
+[Unit]
+Description=By Machines Lab — daily panel run
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=lab
+Group=lab
+WorkingDirectory=/opt/bymachines-lab
+# the CLI loads /opt/bymachines-lab/.env itself (WorkingDirectory) — one parser for quotes and comments, not two
+Environment=LAB_DATA_DIR=/opt/bymachines-lab/data
+ExecStart=/opt/bymachines-lab/.venv/bin/lab run
+# a stuck day must not overlap the next one; SIGTERM lets in-flight calls finish (graceful stop), including queued
+# DataForSEO tasks that are polled for up to poll_timeout_s → give the stop enough time before SIGKILL
+TimeoutStartSec=6h
+TimeoutStopSec=50min
+KillSignal=SIGTERM
+KillMode=mixed
+Nice=10

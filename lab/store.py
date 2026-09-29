@@ -40,6 +40,7 @@ class RunRecord:
     latency_ms: int
     model: str
     citations: list[tuple[int, str, str, str]] = field(default_factory=list)   # (position, url, domain, title)
+    n_search: int = 0                # search queries the engine executed (Gemini bills per query; OpenAI per search action)
 
 
 SCHEMA = """
@@ -59,7 +60,7 @@ CREATE TABLE IF NOT EXISTS runs (
     location TEXT NOT NULL, run_idx INTEGER NOT NULL, status TEXT NOT NULL,
     raw_json TEXT, answer_text TEXT, cost_usd REAL NOT NULL DEFAULT 0, error TEXT,
     panel_sha TEXT, search INTEGER NOT NULL DEFAULT 1, searched INTEGER NOT NULL DEFAULT 0,
-    catch_up INTEGER NOT NULL DEFAULT 0, latency_ms INTEGER, model TEXT
+    catch_up INTEGER NOT NULL DEFAULT 0, latency_ms INTEGER, model TEXT, n_search INTEGER NOT NULL DEFAULT 0
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_runs_key ON runs (iso_week, prompt_id, engine_id, location, run_idx);
 CREATE TABLE IF NOT EXISTS citations (
@@ -71,7 +72,7 @@ CREATE INDEX IF NOT EXISTS ix_citations_run ON citations (run_id);
 """
 
 RUN_COLUMNS = ("ts_utc", "iso_week", "prompt_id", "engine_id", "location", "run_idx", "status", "raw_json",
-               "answer_text", "cost_usd", "error", "panel_sha", "search", "searched", "catch_up", "latency_ms", "model")
+               "answer_text", "cost_usd", "error", "panel_sha", "search", "searched", "catch_up", "latency_ms", "model", "n_search")
 
 
 class Store:
@@ -87,7 +88,19 @@ class Store:
             self.conn.execute("PRAGMA journal_mode = WAL")
         self._lock = threading.Lock()
         self.conn.executescript(SCHEMA)
+        self._migrate()
         self.conn.commit()
+
+    # columns added after a table's first release: (table, column, DDL). CREATE TABLE IF NOT EXISTS never adds columns.
+    MIGRATIONS: tuple[tuple[str, str, str], ...] = (
+        ("runs", "n_search", "INTEGER NOT NULL DEFAULT 0"),
+    )
+
+    def _migrate(self) -> None:
+        for table, column, ddl in self.MIGRATIONS:
+            cols = {r[1] for r in self.conn.execute(f"PRAGMA table_info({table})")}
+            if column not in cols:
+                self.conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}")
 
     def close(self) -> None:
         self.conn.close()
@@ -129,7 +142,7 @@ class Store:
         k = rec.key
         values = (rec.ts_utc, k.iso_week, k.prompt_id, k.engine_id, k.location, k.run_idx, rec.status, rec.raw_json,
                   rec.answer_text, float(rec.cost_usd), rec.error, rec.panel_sha, int(rec.search), int(rec.searched),
-                  int(rec.catch_up), rec.latency_ms, rec.model)
+                  int(rec.catch_up), rec.latency_ms, rec.model, int(rec.n_search))
         with self._lock:
             row = self.conn.execute(
                 "SELECT id, status FROM runs WHERE iso_week=? AND prompt_id=? AND engine_id=? AND location=? AND run_idx=?",
@@ -144,6 +157,9 @@ class Store:
             if row["status"] == "ok":
                 return "skipped"
             run_id = int(row["id"])
+            # money already paid for this cell (a failed or incomplete earlier attempt) stays on the row: cost_usd accumulates
+            old_cost = float(self.conn.execute("SELECT cost_usd FROM runs WHERE id=?", (run_id,)).fetchone()[0] or 0.0)
+            values = (*values[:9], round(float(rec.cost_usd) + old_cost, 6), *values[10:])
             sets = ", ".join(f"{c}=?" for c in RUN_COLUMNS)
             self.conn.execute(f"UPDATE runs SET {sets} WHERE id=?", (*values, run_id))
             self.conn.execute("DELETE FROM citations WHERE run_id=?", (run_id,))
@@ -185,6 +201,25 @@ class Store:
 
     def weeks(self) -> list[str]:
         return [r[0] for r in self.conn.execute("SELECT DISTINCT iso_week FROM runs ORDER BY iso_week")]
+
+    def week_cost(self, iso_week: str) -> float:
+        """Money spent this ISO week across all rows — error rows with a paid response count too."""
+        row = self.conn.execute("SELECT COALESCE(SUM(cost_usd), 0) FROM runs WHERE iso_week=?", (iso_week,)).fetchone()
+        return float(row[0] or 0.0)
+
+    def month_search_queries(self, engine_id: str, year_month: str) -> int:
+        """Search queries an engine executed in a calendar month (UTC), for monthly free quotas."""
+        row = self.conn.execute(
+            "SELECT COALESCE(SUM(n_search), 0) FROM runs WHERE engine_id=? AND substr(ts_utc, 1, 7)=?", (engine_id, year_month)).fetchone()
+        return int(row[0] or 0)
+
+    def count_ok(self, iso_week: str, prompt_ids: Iterable[str]) -> int:
+        ids = list(prompt_ids)
+        if not ids:
+            return 0
+        marks = ",".join("?" * len(ids))
+        row = self.conn.execute(f"SELECT COUNT(*) FROM runs WHERE iso_week=? AND status='ok' AND prompt_id IN ({marks})", (iso_week, *ids)).fetchone()
+        return int(row[0])
 
     def n_citations_by_run(self, iso_week: str) -> dict[int, int]:
         rows = self.conn.execute(

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from conftest import AGENT, FIRMS, HUMAN, LOCATIONS, deep, write_config
+from conftest import AGENT, ENGINES, FIRMS, HUMAN, LOCATIONS, deep, write_config
 from lab.config import ConfigError, load_vertical
 
 
@@ -19,7 +19,7 @@ def test_loads_vertical_and_substitutes_template(config_dir):
     assert agent.refusal_patterns == ["can'?t recommend", "it depends"]
     assert set(v.locations) == {"lisbon", "madrid", "london"}
     assert v.engines.engines["openai"].enabled and not v.engines.engines["gemini"].enabled
-    assert v.engines.tunables["catch_up_days"] == 1
+    assert v.engines.tunables["catch_up_days"] == ENGINES["catch_up_days"]   # tunables load verbatim from engines.yaml
     assert human.sha256 and len(human.sha256) == 64
     assert {f.id for f in v.firms} == {"plmj", "bymachines", "joao"}
 

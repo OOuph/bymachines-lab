@@ -20,13 +20,15 @@ from lab.engines import build_engine
 from lab.engines.base import EngineError
 from lab.env import data_dir, load_dotenv, setup_logging
 from lab.freeze import FreezeJournalError, check, freeze, latest
-from lab.planner import NotFrozenError, PlanError, estimate_cost, iso_week_of, panels_due, plan_day
+from lab.journal import alert_path, append as journal, write_alert
+from lab.planner import (BudgetExceeded, CUT_AGENT_CORE, NotFrozenError, PlanError, apply_budget_guard, estimate_cost,
+                         iso_week_of, panels_due, plan_day, previous_iso_week)
 from lab.runner import run_plan
 from lab.store import Store
 
 log = logging.getLogger("lab.cli")
 
-EXIT_OK, EXIT_ERRORS, EXIT_USAGE, EXIT_REFUSED, EXIT_LOCKED = 0, 1, 2, 3, 4
+EXIT_OK, EXIT_ERRORS, EXIT_USAGE, EXIT_REFUSED, EXIT_LOCKED, EXIT_BUDGET = 0, 1, 2, 3, 4, 5
 
 
 def default_db() -> Path:
@@ -114,18 +116,27 @@ def cmd_run(args) -> int:
     logfile = setup_logging(data_dir())
     v = _vertical(args)
     db_path = args.db or str(default_db())
-    if _is_default_db(args.db):
+    production = _is_default_db(args.db)
+    if production:
         for flag, used in (("--allow-unfrozen", args.allow_unfrozen), ("--runs", args.runs is not None), ("--search", args.search != "auto")):
             if used:
                 print(f"{flag} requires a non-default --db (the production database {default_db()} takes only frozen, "
                       f"scheduled, weekday-indexed runs)", file=sys.stderr)
                 return EXIT_USAGE
-    day = dt.date.fromisoformat(args.date) if args.date else dt.datetime.now(dt.timezone.utc).date()
+    today = dt.datetime.now(dt.timezone.utc).date()
+    day = dt.date.fromisoformat(args.date) if args.date else today
+    if production and not args.dry_run and (day > today or iso_week_of(day) != iso_week_of(today)):
+        print(f"--date {day} is outside the current ISO week ({iso_week_of(today)}) or in the future: the production database "
+              f"never back-fills other weeks (SPEC §4); use a non-default --db for experiments", file=sys.stderr)
+        return EXIT_USAGE
     run_idx_list = list(range(1, args.runs + 1)) if args.runs else None
     search_override = None if args.search == "auto" else (args.search == "on")
 
     lock = None
     if not args.dry_run:
+        if alert_path(data_dir()).exists() and production:
+            print(f"REFUSED: {alert_path(data_dir())} exists (budget stop) — read it, then delete it to resume (SPEC S-G)", file=sys.stderr)
+            return EXIT_BUDGET
         lock = _acquire_lock(Path(db_path).with_suffix(".lock"))
         if lock is None:
             print(f"REFUSED: another `lab run` holds {Path(db_path).with_suffix('.lock')}", file=sys.stderr)
@@ -174,15 +185,49 @@ def cmd_run(args) -> int:
     except NotFrozenError as exc:
         print(f"REFUSED: {exc}", file=sys.stderr)
         return EXIT_REFUSED
-    est = estimate_cost(plan, v)
+    iso_week = iso_week_of(day)
+    month = today.strftime("%Y-%m")
+    planned_before = len(plan)
+    # ALERT and the journal belong to the production run only; a smoke run with --db must never block the timer
+    record = production and not args.dry_run
+    try:
+        plan, cuts = apply_budget_guard(plan, v, store, iso_week, month)
+    except PlanError as exc:
+        print(f"CONFIG ERROR: {exc}", file=sys.stderr)
+        return EXIT_USAGE
+    except BudgetExceeded as exc:
+        msg = f"budget guard: {exc}"
+        log.error(msg)
+        if record:
+            write_alert(data_dir(), "weekly budget cap exceeded — run stopped before any call",
+                        details={"iso_week": iso_week, "cap": exc.cap, "spent": round(exc.spent, 4), "projected": round(exc.projected, 4),
+                                 "cuts_tried": exc.cuts, "cells_planned": planned_before})
+        print(f"REFUSED: {msg}", file=sys.stderr)
+        return EXIT_BUDGET
+    spent = store.week_cost(iso_week)
+    est = estimate_cost(plan, v, store, month)
+    for cut in cuts:
+        line = f"budget cut {iso_week}: {cut} dropped (spent ${spent:.2f} + projected ${est:.2f} vs cap ${float(v.engines.tunables.get('weekly_budget_usd', 50)):.2f})"
+        log.warning(line)
+        if record:
+            journal(data_dir(), line)
+    if CUT_AGENT_CORE in cuts and record:
+        agent_panels = [panel for panel in v.panels if panel.kind == "agent"]
+        agent_ids = [p.id for panel in agent_panels for p in panel.prompts]
+        prev = previous_iso_week(iso_week)
+        prev_sunday = dt.date.fromisocalendar(int(prev[:4]), int(prev[-2:]), 7)
+        agent_due_prev = any(panel.start_date is None or panel.start_date <= prev_sunday for panel in agent_panels)
+        if agent_due_prev and store.count_ok(prev, agent_ids) == 0 and store.count_ok(iso_week, agent_ids) == 0:
+            journal(data_dir(), f"agent experiment paused: no agent-core runs in {prev} and {iso_week} (budget)")
     due = [p.name for p in panels_due(v, day, args.panel or None, ignore_schedule=args.allow_unfrozen)]
-    log.info("plan: day=%s iso_week=%s run_idx=%s panels=%s engines=%s cells=%d estimated_cost=$%.4f db=%s log=%s",
-             day, iso_week_of(day), run_idx_list or [day.isoweekday()], due, available, len(plan), est, db_path, logfile)
+    log.info("plan: day=%s iso_week=%s run_idx=%s panels=%s engines=%s cells=%d cuts=%s spent=$%.4f estimated=$%.4f db=%s log=%s",
+             day, iso_week, sorted({p.key.run_idx for p in plan}) or [day.isoweekday()], due, available, len(plan), cuts, spent, est,
+             db_path, logfile)
     if args.dry_run:
         for pr in plan:
             print(f"  {pr.key.iso_week} {pr.key.prompt_id:8} {pr.key.engine_id:10} {pr.key.location:9} run{pr.key.run_idx} "
-                  f"model={pr.options['model']} search={pr.options['search']}")
-        print(f"dry run: {len(plan)} cells, estimated ${est:.4f} (nothing written)")
+                  f"model={pr.options['model']} search={pr.options['search']}{' catch_up' if pr.options.get('catch_up') else ''}")
+        print(f"dry run: {len(plan)} cells, cuts={cuts or 'none'}, spent this week ${spent:.4f}, estimated ${est:.4f} (nothing written)")
         return EXIT_OK
     if not plan:
         print(f"nothing to do for {day}: panels due {due or 'none'}, every planned cell already has an ok row")
@@ -195,7 +240,8 @@ def cmd_run(args) -> int:
 
     for s in (signal.SIGINT, signal.SIGTERM):
         signal.signal(s, _sig)
-    stats = run_plan(plan, engines, store, concurrency=args.concurrency or int(v.engines.tunables.get("concurrency", 4)), stop_event=stop)
+    stats = run_plan(plan, engines, store, concurrency=args.concurrency or int(v.engines.tunables.get("concurrency", 4)), stop_event=stop,
+                     specs=v.engines.engines)
     print(f"inserted={stats.inserted} updated={stats.updated} skipped={stats.skipped} errors={stats.errors} "
           f"store_failures={stats.store_failures} cost=${stats.cost_usd:.4f}{' (stopped early)' if stats.stopped_early else ''}")
     return EXIT_ERRORS if (stats.errors or stats.store_failures) and not (stats.inserted or stats.updated) else EXIT_OK

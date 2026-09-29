@@ -10,12 +10,27 @@ from lab.engines.base import Answer, Citation, EngineError, EngineLike  # noqa: 
 
 
 def build_engine(spec: EngineSpec, tunables: dict[str, Any]) -> EngineLike | None:
-    """Return a live adapter for the spec, or None when its API keys are missing or the adapter is not built yet."""
+    """Return a live adapter for the spec; raise EngineError when its keys are missing; None for an unknown api."""
     missing = [k for k in spec.env if not os.environ.get(k)]
     if missing:
         raise EngineError(f"engine {spec.id}: missing environment variable(s) {', '.join(missing)}")
+    env = {k: os.environ[k] for k in spec.env}
     if spec.api == "openai_responses":
         from lab.engines.openai import OpenAIEngine
 
-        return OpenAIEngine.from_spec(spec, tunables, api_key=os.environ[spec.env[0]])
-    return None  # gemini / perplexity / dataforseo arrive in slice S2
+        return OpenAIEngine.from_spec(spec, tunables, api_key=env[spec.env[0]])
+    if spec.api == "perplexity_agent":
+        from lab.engines.perplexity import PerplexityEngine
+
+        return PerplexityEngine.from_spec(spec, tunables, api_key=env[spec.env[0]])
+    if spec.api == "gemini_generate_content":
+        from lab.engines.gemini import GeminiEngine
+
+        return GeminiEngine.from_spec(spec, tunables, api_key=env[spec.env[0]])
+    if spec.api == "dataforseo_ai_mode":
+        from lab.engines.dataforseo import DataForSEOEngine
+
+        login = env.get("DATAFORSEO_LOGIN") or env[spec.env[0]]
+        password = env.get("DATAFORSEO_PASSWORD") or env[spec.env[-1]]
+        return DataForSEOEngine.from_spec(spec, tunables, login=login, password=password)
+    return None
